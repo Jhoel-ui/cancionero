@@ -1,6 +1,6 @@
 # Cancionero Renovación
 
-Página web del Ministerio de Alabanza Renovación (Alto Ballivián): alabanzas con acordes, repertorios de sábado y domingo, mensaje de WhatsApp y PDF.
+Página web del Ministerio de Alabanza Renovación (Alto Ballivián): alabanzas con acordes, repertorios con nombre, fecha, partes y tonos, mensaje de WhatsApp y PDF.
 
 Es una página estática (HTML, CSS y JS, sin instalar nada). Los datos viven en Firebase (Firestore), que los sincroniza al instante y los guarda en el teléfono para leerlos sin señal.
 

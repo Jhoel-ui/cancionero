@@ -106,6 +106,14 @@
     if (!t) return "";
     return transponerAcorde(t, pasos, usaBemoles(transponerAcorde(t, pasos, false)));
   }
+  // Medios tonos para pasar de un tono a otro (el camino más corto), p. ej. Cm → Am = -3
+  function pasosEntre(de, a) {
+    const r = (t) => { const m = /^([A-G][#b]?)/.exec(normalizarAcorde(t || "") || ""); return m ? indiceNota(m[1]) : -1; };
+    const i = r(de), j = r(a);
+    if (i < 0 || j < 0) return 0;
+    const d = (j - i + 12) % 12;
+    return d > 6 ? d - 12 : d;
+  }
   // Posición del tono en el círculo de quintas (0 = C), para el color de la franja
   function quinta(tono) {
     const m = /^([A-G][#b]?)/.exec(tono || "");
@@ -131,6 +139,6 @@
 
   global.Acordes = {
     esAcorde, normalizarAcorde, segmentos, esSeccion, nombreSeccion, convertirAcordesArriba,
-    usaBemoles, transponerAcorde, tonoDe, tonoTranspuesto, quinta, lineasMonoespacio,
+    usaBemoles, transponerAcorde, pasosEntre, tonoDe, tonoTranspuesto, quinta, lineasMonoespacio,
   };
 })(window);

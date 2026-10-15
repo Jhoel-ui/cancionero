@@ -57,9 +57,9 @@
 
   /* ---------- Estado ---------- */
   const S = {
-    vista: "inicio",       // inicio | cancionero | repertorio | elegir | cancion | editar
+    vista: "inicio",       // inicio | cancionero | repertorio | rep-editar | elegir | cancion | editar
     canciones: {}, repertorios: {},
-    semana: 0, dia: null,
+    rep: null, prefill: null,
     categoria: "", orden: "az", buscar: "",
     cancionId: null, contexto: "cancionero", volverA: "cancionero",
     transponer: 0, modo: "practica",
@@ -87,14 +87,96 @@
   const nombreDia = (f) => mayus(DIAS[deIso(f).getDay()]);
   const fechaLarga = (f) => { const d = deIso(f); return `${nombreDia(f)} ${d.getDate()} de ${MESES[d.getMonth()]}`; };
   const fechaCorta = (f) => { const d = deIso(f); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
-  function finDeSemana(n) {
-    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-    const dia = hoy.getDay();
-    const sab = new Date(hoy); sab.setDate(hoy.getDate() + (dia === 0 ? -1 : 6 - dia) + n * 7);
-    const dom = new Date(sab); dom.setDate(sab.getDate() + 1);
-    return [iso(sab), iso(dom)];
+  const esFecha = (f) => /^\d{4}-\d{2}-\d{2}$/.test(f || "");
+  function proximoSabado() {
+    const d = new Date(); d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
+    return iso(d);
   }
-  const idsDe = (f) => ((S.repertorios[f] || {}).canciones || []).filter((id) => S.canciones[id]);
+  const clave = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+
+  /* ---------- Repertorios ----------
+     { nombre, fecha, items: [{ titulo, tono, id?, alt? } | { bloque: "2da Parte" }] }
+     Una alabanza puede estar solo con su nombre; si luego se registra en el cancionero, se enlaza sola
+     por el nombre ("Salmo 91" encuentra "Salmos 91"). Los repertorios viejos (id = fecha, canciones: [ids])
+     se leen como una lista simple. */
+  const suave = (t) => clave(t).split(" ").map((w) => w.replace(/s$/, "")).join(" ");
+  function buscarPorTitulo(t) {
+    const k = suave(t); if (!k) return null;
+    const parecidas = [];
+    for (const [id, c] of Object.entries(S.canciones)) {
+      const s = suave(c.titulo);
+      if (s === k) return id;
+      if (s.startsWith(k + " ") || k.startsWith(s + " ")) parecidas.push(id);
+    }
+    return parecidas.length === 1 ? parecidas[0] : null;
+  }
+  const esCancion = (it) => it && it.bloque === undefined;
+  const enlazada = (it) => (!esCancion(it) ? null : it.id && S.canciones[it.id] ? it.id : buscarPorTitulo(it.titulo));
+  const rep = (rid) => (rid ? S.repertorios[rid] : null);
+  const tituloItem = (it) => it.titulo || (S.canciones[enlazada(it)] || {}).titulo || "";
+  const tonoItem = (it) => it.tono || (enlazada(it) ? A.tonoDe(S.canciones[enlazada(it)]) : "");
+  const cancionesDe = (rid) => ((rep(rid) || {}).items || []).filter(esCancion);
+  const idsDe = (rid) => [...new Set(cancionesDe(rid).map(enlazada).filter(Boolean))];
+  const cuantas = (n) => (n ? n + (n === 1 ? " alabanza" : " alabanzas") : "sin alabanzas");
+  function leerRepertorio(id, x) {
+    if (Array.isArray(x.items)) return { id, nombre: x.nombre || "Repertorio", fecha: x.fecha || "", items: x.items };
+    const f = esFecha(x.fecha) ? x.fecha : esFecha(id) ? id : "";
+    return { id, nombre: f ? nombreDia(f) : "Repertorio", fecha: f, items: (x.canciones || []).map((cid) => ({ titulo: "", tono: "", id: cid })) };
+  }
+  function repertoriosOrdenados() {
+    const hoy = iso(new Date()), l = Object.values(S.repertorios);
+    return {
+      proximos: l.filter((r) => !r.fecha || r.fecha >= hoy).sort((a, b) => (a.fecha || "9").localeCompare(b.fecha || "9")),
+      pasados: l.filter((r) => r.fecha && r.fecha < hoy).sort((a, b) => b.fecha.localeCompare(a.fecha)),
+    };
+  }
+  // Lista escrita como en WhatsApp: "- Santo por siempre - G", "----- *2da Parte*", "Ó" para una alternativa.
+  function leerLista(texto) {
+    let nombre = "", alt = false;
+    const items = [];
+    for (const crudo of String(texto || "").replace(/\r/g, "").split("\n")) {
+      const l = crudo.trim(); if (!l) continue;
+      const sep = /^[-–—_=─]{3,}\s*(.*)$/.exec(l);
+      if (sep) {
+        const t = sep[1].replace(/[*_~]/g, "").trim(), ult = items[items.length - 1];
+        alt = false;
+        if (ult && !esCancion(ult) && !ult.bloque) items.pop();
+        if (items.length || t) items.push({ bloque: t });
+        continue;
+      }
+      if (/^[óo]$/i.test(l)) { alt = true; continue; }
+      const marcada = /^(?:[-•*·]|\d+[.)])\s*/.test(l);
+      let t = l.replace(/^(?:[-•*·]|\d+[.)])\s*/, "").replace(/[*_~]/g, "").trim();
+      if (!marcada && !items.length && !nombre) { nombre = t; continue; }
+      let tono = "";
+      const m = /^(.*?)\s*[-–—]\s*([^-–—]*)$/.exec(t);
+      if (m) {
+        const ac = m[2].trim() ? A.normalizarAcorde(m[2].trim().replace(/\s+/g, "")) : "";
+        if (ac !== null) { t = m[1].trim(); tono = ac || ""; }
+      }
+      if (!t) continue;
+      const it = { titulo: t, tono }, id = buscarPorTitulo(t);
+      if (id) it.id = id;
+      if (alt) it.alt = true;
+      alt = false; items.push(it);
+    }
+    while (items.length && !esCancion(items[items.length - 1])) items.pop();
+    nombre = nombre.replace(/^repertorio\s+/i, "");
+    if (nombre === nombre.toUpperCase()) nombre = nombre.toLowerCase();
+    return { nombre: nombre.replace(/^./, (c) => c.toUpperCase()), items };
+  }
+  function escribirLista(items) {
+    return items.map((it) => esCancion(it)
+      ? (it.alt ? "Ó\n" : "") + `- ${tituloItem(it)}${tonoItem(it) ? " - " + tonoItem(it) : ""}`
+      : "----------" + (it.bloque ? ` *${it.bloque}*` : "")).join("\n");
+  }
+  // Medios tonos para llevar la alabanza al tono que se puso en el repertorio
+  function pasosPara(id, rid) {
+    const r = rep(rid); if (!r || !S.canciones[id]) return 0;
+    const it = r.items.find((x) => x.tono && enlazada(x) === id);
+    return it ? A.pasosEntre(A.tonoDe(S.canciones[id]), it.tono) : 0;
+  }
   const puede = (p) => S.cargado && S.fuente && S.fuente.permisos && S.fuente.permisos[p];
   const coincide = (c, q) => !q || normal(`${c.titulo} ${c.autor || ""} ${A.tonoDe(c)} ${(c.letra || "").replace(/\[[^\]]*\]/g, "")}`).includes(q);
   const todas = () => Object.entries(S.canciones).map(([id, c]) => ({ id, ...c }));
@@ -123,10 +205,20 @@
     else if (code === "quota_exceeded") avisar("El cancionero está lleno. Borra alabanzas que no uses.", true);
     else avisar("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.", true);
   }
-  async function guardarRepertorio(fecha, ids) {
-    S.repertorios[fecha] = { fecha, canciones: ids }; render();
-    try { await S.fuente.guardar("repertorios", fecha, { fecha, canciones: ids, actualizado: Date.now() }); }
-    catch (e) { errorGuardar(e); }
+  // Firestore no acepta campos undefined: se guarda cada elemento limpio.
+  const limpio = (it) => esCancion(it)
+    ? Object.assign({ titulo: tituloItem(it), tono: it.tono || "" }, it.id ? { id: it.id } : {}, it.alt ? { alt: true } : {})
+    : { bloque: it.bloque || "" };
+  async function guardarRepertorio(rid, datos) {
+    const r = Object.assign({}, rep(rid) || {}, datos);
+    const doc = { nombre: r.nombre || "Repertorio", fecha: r.fecha || "", items: (r.items || []).map(limpio), actualizado: Date.now() };
+    const id = await S.fuente.guardar("repertorios", rid || null, doc);
+    S.repertorios[id] = leerRepertorio(id, doc);
+    return id;
+  }
+  async function cambiarItems(items) {
+    const rid = S.rep; S.repertorios[rid] = Object.assign({}, rep(rid), { items }); render();
+    try { await guardarRepertorio(rid, { items }); } catch (e) { errorGuardar(e); }
   }
 
   /* ---------- Letra con acordes ---------- */
@@ -171,20 +263,22 @@
     return h;
   }
 
-  function bloqueDia(f) {
-    const ids = idsDe(f);
+  function bloqueRep(r) {
+    const l = r ? cancionesDe(r.id) : [];
     return `<article class="bloque">
       <div class="bloque__cab"><span class="bloque__icono">${ic("calendario")}</span>
-        <div><h2>${nombreDia(f)}</h2><p class="bloque__sub">${fechaCorta(f)} · ${ids.length ? ids.length + (ids.length === 1 ? " alabanza" : " alabanzas") : "repertorio por armar"}</p></div></div>
-      ${!S.cargado ? `<div class="esqueleto"></div>` : ids.length
-        ? `<ol>${ids.map((id, i) => `<li><button data-abrir="${id}" data-contexto="${f}"><b>${i + 1}</b><span>${esc(S.canciones[id].titulo)}</span><em>${esc(A.tonoDe(S.canciones[id]))}</em></button></li>`).join("")}</ol>`
-        : `<p class="bloque__vacio">${puede("editar") ? "Elige las alabanzas para este día." : "Cuando se arme el repertorio, aparecerá aquí."}</p>`}
-      <button class="boton boton--chico" data-ir-dia="${f}">${ids.length ? "Ver repertorio" : (puede("editar") ? "Armar repertorio" : "Ver repertorio")} ${ic("flecha")}</button>
+        <div><h2>${r ? esc(r.nombre) : "Repertorios"}</h2><p class="bloque__sub">${r ? `${r.fecha ? fechaCorta(r.fecha) + " · " : ""}${cuantas(l.length)}` : "Vigilias, ensayos y cultos"}</p></div></div>
+      ${!S.cargado ? `<div class="esqueleto"></div>` : l.length
+        ? `<ol>${l.slice(0, 6).map((it, i) => { const id = enlazada(it);
+            return `<li><button ${id ? `data-abrir="${id}" data-contexto="${r.id}"` : `data-rep="${r.id}"`}><b>${i + 1}</b><span>${esc(tituloItem(it))}</span><em>${esc(tonoItem(it))}</em></button></li>`; }).join("")}</ol>
+           ${l.length > 6 ? `<p class="bloque__vacio">y ${l.length - 6} más</p>` : ""}`
+        : `<p class="bloque__vacio">${r ? "Todavía sin alabanzas." : puede("editar") ? "Arma el primero: pega la lista tal como la mandas por WhatsApp." : "Cuando se arme un repertorio, aparecerá aquí."}</p>`}
+      <button class="boton boton--chico" ${r ? `data-rep="${r.id}"` : `data-nav="repertorio"`}>${r ? "Ver repertorio" : "Ir a repertorios"} ${ic("flecha")}</button>
     </article>`;
   }
 
   function vistaInicio() {
-    const [sab, dom] = finDeSemana(0);
+    const prox = repertoriosOrdenados().proximos.slice(0, 2);
     const total = todas().length;
     const cats = CATEGORIAS.map((c) => ({ ...c, n: todas().filter((x) => x.categoria === c.id).length })).filter((c) => c.n);
     return `<section class="portada">
@@ -197,12 +291,12 @@
           <button type="submit" aria-label="Buscar">${ic("buscar")}</button>
         </form>
         <div class="fila"><a class="boton boton--principal" href="#cancionero" data-nav="cancionero">${ic("nota")} Ir al cancionero</a>
-          <a class="boton" href="#repertorio" data-nav="repertorio">${ic("calendario")} Repertorio del fin de semana</a></div>
+          <a class="boton" href="#repertorio" data-nav="repertorio">${ic("calendario")} Repertorios</a></div>
       </div>
     </section>
     <div class="envoltura" style="padding-bottom:56px;display:grid;gap:28px">
       <div class="inicio-bloques">
-        ${bloqueDia(sab)}${bloqueDia(dom)}
+        ${prox.length ? prox.map(bloqueRep).join("") : bloqueRep(null)}
         <article class="bloque">
           <div class="bloque__cab"><span class="bloque__icono">${ic("nota")}</span>
             <div><h2>Cancionero</h2><p class="bloque__sub">Letras con acordes y su versión de referencia</p></div></div>
@@ -227,7 +321,6 @@
      importar/canciones.json trae alabanzas transcritas para cargarlas de una vez con la cuenta del líder.
      Solo se agregan las que todavía no existen (se compara por nombre). */
   let paraImportar = null;
-  const clave = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
   function pendientesImportar() {
     if (!puede("borrar")) return [];
     if (paraImportar === null) {
@@ -279,56 +372,95 @@
     </div>`;
   }
 
-  function vistaRepertorio() {
-    const [sab, dom] = finDeSemana(S.semana);
-    if (![sab, dom].includes(S.dia)) S.dia = sab;
-    const ids = idsDe(S.dia), editable = puede("editar");
-    const tarjeta = (f) => {
-      const n = idsDe(f).length;
-      return `<button class="dia" role="tab" data-dia="${f}" aria-selected="${S.dia === f}"><span class="dia__nombre">${nombreDia(f)}</span>
-        <span class="dia__dato">${fechaCorta(f)} · ${n ? n + (n === 1 ? " alabanza" : " alabanzas") : "sin armar"}</span></button>`;
-    };
+  function tarjetaRep(r) {
+    const n = cancionesDe(r.id).length;
+    return `<li><button class="rep-tarjeta" data-rep="${r.id}">
+      <span class="rep-tarjeta__fecha">${r.fecha ? `<b>${deIso(r.fecha).getDate()}</b><span>${MESES[deIso(r.fecha).getMonth()].slice(0, 3)}</span>` : ic("calendario")}</span>
+      <span class="fila-cancion__texto"><b>${esc(r.nombre)}</b><span>${r.fecha ? nombreDia(r.fecha) + " · " : ""}${cuantas(n)}</span></span>${ic("der")}</button></li>`;
+  }
+  function vistaRepertorios() {
+    const { proximos, pasados } = repertoriosOrdenados(), editable = puede("editar");
     let h = `<div class="envoltura pagina">${avisos()}
-      <div class="seccion-titulo"><h1>Repertorio</h1><p>Las alabanzas de cada sábado y domingo, en orden.</p></div>
-      <div class="semana">
-        <button class="boton boton--icono" data-accion="semana-menos" aria-label="Semana anterior">${ic("izq")}</button>
-        <div class="dias" role="tablist" aria-label="Día">${tarjeta(sab)}${tarjeta(dom)}</div>
-        <button class="boton boton--icono" data-accion="semana-mas" aria-label="Semana siguiente">${ic("der")}</button>
-      </div>
-      ${S.semana !== 0 ? `<div><button class="boton boton--chico" data-accion="semana-hoy">Volver a esta semana</button></div>` : ""}`;
+      <div class="fila fila--entre"><div class="seccion-titulo"><h1>Repertorios</h1><p>Vigilias, ensayos y cultos, con su orden y sus tonos.</p></div>
+        ${editable ? `<button class="boton boton--principal" data-accion="rep-nuevo">${ic("mas")} Nuevo repertorio</button>` : ""}</div>`;
     if (!S.cargado) return h + `<div class="esqueleto"></div><div class="esqueleto"></div></div>`;
-    if (!ids.length) {
-      return h + `<div class="vacio"><b>${fechaLarga(S.dia)}: sin alabanzas todavía</b>
-        <p>${editable ? "Elige las canciones y ordénalas; el equipo las verá al instante." : "Cuando el líder arme el repertorio, aparecerá aquí."}</p>
-        ${editable ? `<button class="boton boton--principal" data-accion="elegir">${ic("mas")} Agregar alabanzas</button>` : ""}</div></div>`;
+    if (!proximos.length && !pasados.length) {
+      return h + `<div class="vacio"><b>Todavía no hay repertorios</b>
+        <p>${editable ? "Ponle nombre y fecha, y pega la lista tal como la mandas por WhatsApp." : "Cuando el líder arme un repertorio, aparecerá aquí."}</p>
+        ${editable ? `<button class="boton boton--principal" data-accion="rep-nuevo">${ic("mas")} Armar repertorio</button>` : ""}</div></div>`;
     }
-    const txt = mensajeWhatsApp(S.dia, ids);
-    h += `<div class="repertorio"><div style="display:grid;gap:14px;min-width:0">
-      <div class="fila fila--entre"><h2 style="font:600 1.375rem/1.2 var(--f-titulo)">${fechaLarga(S.dia)}</h2>
-        ${editable ? `<button class="boton boton--chico" data-accion="elegir">${ic("mas")} Agregar</button>` : ""}</div>
-      <ol class="lista-rep">${ids.map((id, i) => {
-        const c = S.canciones[id], t = A.tonoDe(c);
-        return `<li><span class="orden">${i + 1}</span>
-          <button class="cancion" data-abrir="${id}" data-contexto="${S.dia}"><b>${esc(c.titulo)}</b><span>${esc([t && "Tono " + t, c.categoria, c.autor].filter(Boolean).join(" · ")) || "&nbsp;"}</span></button>
-          ${editable ? `<span class="mover">
-            <button class="boton boton--plano boton--chico boton--icono" data-subir="${i}" ${i === 0 ? "disabled" : ""} aria-label="Subir">${ic("arriba")}</button>
-            <button class="boton boton--plano boton--chico boton--icono" data-bajar="${i}" ${i === ids.length - 1 ? "disabled" : ""} aria-label="Bajar">${ic("abajo")}</button>
-            <button class="boton boton--plano boton--chico boton--icono" data-quitar="${i}" aria-label="Quitar del repertorio">${ic("x")}</button></span>` : "<span></span>"}</li>`;
-      }).join("")}</ol>
-      <div class="fila"><button class="boton boton--principal" data-abrir="${ids[0]}" data-contexto="${S.dia}" data-modo="presentacion">${ic("pantalla")} Presentar en vivo</button>
-        <button class="boton" data-accion="pdf">${ic("bajar")} Descargar PDF</button></div>
-    </div>
-    <aside class="panel"><h2>Enviar al grupo de WhatsApp</h2><pre class="mensaje" id="mensaje">${esc(txt)}</pre>
-      <div class="fila"><button class="boton boton--principal" data-accion="copiar">${ic("copiar")} Copiar</button>
-      <a class="boton" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic("mensaje")} Abrir WhatsApp</a></div></aside>
-    </div></div>`;
-    return h;
+    if (proximos.length) h += `<section class="grupo-reps"><h2 class="subtitulo">Próximos</h2><ul class="reps">${proximos.map(tarjetaRep).join("")}</ul></section>`;
+    if (pasados.length) h += `<section class="grupo-reps"><h2 class="subtitulo">Anteriores</h2><ul class="reps reps--pasados">${pasados.map(tarjetaRep).join("")}</ul></section>`;
+    return h + `</div>`;
+  }
+
+  function vistaRepertorio() {
+    const r = rep(S.rep);
+    if (!r) return vistaRepertorios();
+    const editable = puede("editar"), items = r.items || [], primera = idsDe(r.id)[0];
+    const total = cancionesDe(r.id).length;
+    let n = 0;
+    const filas = items.map((it, i) => {
+      if (!esCancion(it)) return `<li class="rep-bloque"><span class="rep-bloque__linea">${it.bloque ? `<b>${esc(it.bloque)}</b>` : ""}</span></li>`;
+      const id = enlazada(it), c = id && S.canciones[id], t = tonoItem(it);
+      if (!it.alt) n++;
+      const sub = [t && "Tono " + t, !c || !c.letra ? "Sin letra" : ""].filter(Boolean).join(" · ");
+      return `<li class="${it.alt ? "rep-alt" : ""}${c ? "" : " rep-sin"}"><span class="orden">${it.alt ? "ó" : n}</span>
+          ${c ? `<button class="cancion" data-abrir="${id}" data-contexto="${r.id}"><b>${esc(tituloItem(it))}</b><span>${esc(sub) || "&nbsp;"}</span></button>`
+              : editable ? `<button class="cancion" data-registrar="${i}"><b>${esc(tituloItem(it))}</b><span>${esc(sub)}</span></button>`
+              : `<span class="cancion"><b>${esc(tituloItem(it))}</b><span>${esc(sub)}</span></span>`}</li>`;
+    }).join("");
+    const txt = mensajeWhatsApp(r.id);
+    return `<div class="envoltura pagina">${avisos()}
+      <div class="fila"><button class="boton boton--plano" data-accion="reps">${ic("izq")} Repertorios</button></div>
+      <div class="fila fila--entre"><div class="seccion-titulo"><h1>${esc(r.nombre)}</h1><p>${r.fecha ? fechaLarga(r.fecha) + " · " : ""}${cuantas(total)}</p></div>
+        ${editable ? `<div class="fila"><button class="boton" data-accion="rep-editar">${ic("lapiz")} Editar lista</button>
+          <button class="boton" data-accion="elegir">${ic("mas")} Del cancionero</button></div>` : ""}</div>
+      ${items.length ? `<div class="repertorio"><div style="display:grid;gap:14px;min-width:0">
+        ${editable && cancionesDe(r.id).some((it) => !enlazada(it)) ? `<p class="ayuda">Toca una alabanza “Sin letra” para registrarla en el cancionero; quedará enlazada aquí.</p>` : ""}
+        <ol class="lista-rep lista-rep--rep">${filas}</ol>
+        <div class="fila">${primera ? `<button class="boton boton--principal" data-abrir="${primera}" data-contexto="${r.id}" data-modo="presentacion">${ic("pantalla")} Presentar en vivo</button>` : ""}
+          <button class="boton" data-accion="pdf">${ic("bajar")} Descargar PDF</button></div>
+      </div>
+      <aside class="panel"><h2>Enviar al grupo de WhatsApp</h2><pre class="mensaje" id="mensaje">${esc(txt)}</pre>
+        <div class="fila"><button class="boton boton--principal" data-accion="copiar">${ic("copiar")} Copiar</button>
+        <a class="boton" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic("mensaje")} Abrir WhatsApp</a></div></aside>
+      </div>` : `<div class="vacio"><b>Este repertorio está vacío</b>${editable ? `<button class="boton boton--principal" data-accion="rep-editar">${ic("lapiz")} Escribir la lista</button>` : ""}</div>`}
+    </div>`;
+  }
+
+  function vistaRepEditar() {
+    const r = rep(S.rep) || { nombre: "", fecha: proximoSabado(), items: [] };
+    return `<div class="envoltura pagina">
+      <div class="fila"><button class="boton boton--plano" data-accion="rep-cancelar">${ic("izq")} Cancelar</button></div>
+      <div class="seccion-titulo"><h1>${S.rep ? "Editar repertorio" : "Nuevo repertorio"}</h1></div>
+      <form id="form-rep" class="formulario" novalidate>
+        <div class="dos">
+          <label class="etiqueta">Nombre<input class="campo" name="nombre" list="nombres-rep" autocomplete="off" placeholder="Oficial vigilia" value="${esc(r.nombre)}"></label>
+          <label class="etiqueta">Fecha<input class="campo" name="fecha" type="date" required value="${esc(r.fecha)}"></label>
+        </div>
+        <datalist id="nombres-rep">${["Oficial vigilia", "Ensayo viernes", "Ensayo miércoles", "Confraternidad", "Domingo", "Sábado"].map((x) => `<option value="${x}">`).join("")}</datalist>
+        <label class="etiqueta">Lista<textarea class="campo campo--lista" name="lista" rows="18" spellcheck="false" placeholder="- Santo por siempre - G\n----------\n- Gracia sublime - A\n- Danzando - Bm\n---------- *2da Parte*\n- Jehová Jireh - G">${esc(escribirLista(r.items || []))}</textarea></label>
+        <p class="ayuda">Puedes pegar la lista tal como la mandas por WhatsApp. Una alabanza por línea con su tono: <b>- Danzando - Bm</b>. Separa las partes con <b>-----</b> y, si quieres, ponle nombre: <b>----- 2da Parte</b>. Escribe <b>Ó</b> en una línea para marcar la siguiente como alternativa.</p>
+        <p class="ayuda" id="rep-resumen" aria-live="polite"></p>
+        <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} Guardar repertorio</button>
+          ${S.rep && puede("borrar") ? `<button class="boton boton--plano boton--peligro" type="button" data-accion="rep-borrar">${ic("basura")} Borrar repertorio</button>` : ""}</div>
+      </form>
+    </div>`;
+  }
+  function resumenLista() {
+    const f = document.getElementById("form-rep"), out = document.getElementById("rep-resumen");
+    if (!f || !out) return;
+    const l = leerLista(f.lista.value).items.filter(esCancion), con = l.filter((it) => it.id).length;
+    out.textContent = l.length ? `${cuantas(l.length)}; ${con} ya ${con === 1 ? "tiene" : "tienen"} letra en el cancionero.` : "";
   }
 
   function vistaElegir() {
-    const ids = idsDe(S.dia), lista = filtradas();
+    const r = rep(S.rep);
+    if (!r) return vistaRepertorios();
+    const ids = idsDe(r.id), lista = filtradas();
     return `<div class="envoltura pagina" style="max-width:48rem">
-      <div class="fila fila--entre"><div class="seccion-titulo"><h1>Agregar al ${nombreDia(S.dia).toLowerCase()}</h1><p>${fechaLarga(S.dia)} · ${ids.length} elegidas</p></div>
+      <div class="fila fila--entre"><div class="seccion-titulo"><h1>Agregar a ${esc(r.nombre)}</h1><p>${r.fecha ? fechaLarga(r.fecha) + " · " : ""}${ids.length} del cancionero</p></div>
         <button class="boton boton--principal" data-accion="listo">${ic("check")} Listo</button></div>
       <label class="buscador">${ic("buscar")}<input class="campo" id="buscar-elegir" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar canción" value="${esc(S.buscar)}" aria-label="Buscar canción"></label>
       ${lista.length ? `<ul class="lista-rep">${lista.map((c) => {
@@ -344,7 +476,7 @@
   }
 
   function listaContexto() {
-    if (S.contexto !== "cancionero" && /^\d{4}-\d{2}-\d{2}$/.test(S.contexto)) return idsDe(S.contexto);
+    if (rep(S.contexto)) return idsDe(S.contexto);
     return filtradas().map((c) => c.id);
   }
 
@@ -352,13 +484,13 @@
     const c = S.canciones[S.cancionId];
     if (!c) { S.vista = S.volverA; return render(); }
     const tonoFinal = A.tonoTranspuesto(c, S.transponer), ids = listaContexto();
-    const enRep = S.contexto !== "cancionero";
+    const enRep = !!rep(S.contexto);
     const bpm = metro.bpm || +c.bpm || 0;
     return `<div class="envoltura pagina">
       <div class="fila"><button class="boton boton--plano" data-accion="volver">${ic("izq")} ${S.volverA === "repertorio" ? "Repertorio" : S.volverA === "inicio" ? "Inicio" : "Cancionero"}</button></div>
       <div class="vista-cancion">
         <aside class="lateral">
-          <p class="lateral__titulo">${enRep ? esc(fechaLarga(S.contexto)) : S.categoria || "Todas las canciones"}</p>
+          <p class="lateral__titulo">${enRep ? esc(rep(S.contexto).nombre) : S.categoria || "Todas las canciones"}</p>
           ${enRep ? "" : `<label class="buscador">${ic("buscar")}<input class="campo" id="buscar-lateral" type="search" autocomplete="off" placeholder="Buscar cantos" value="${esc(S.buscar)}" aria-label="Buscar cantos"></label>`}
           <ol>${ids.map((id, i) => `<li><button data-abrir="${id}" data-contexto="${S.contexto}" aria-current="${id === S.cancionId}"><b>${String(i + 1).padStart(2, "0")}</b><span>${esc(S.canciones[id].titulo)}</span></button></li>`).join("")}</ol>
         </aside>
@@ -407,7 +539,7 @@
     const sig = ids[i + 1] ? S.canciones[ids[i + 1]] : null;
     return `<nav class="pasador" aria-label="Siguiente alabanza"><div class="envoltura">
       <button class="boton boton--icono" data-accion="anterior" ${i === 0 ? "disabled" : ""} aria-label="Alabanza anterior">${ic("izq")}</button>
-      <div class="pasador__centro"><b>${i + 1} de ${ids.length}${S.contexto !== "cancionero" ? " · " + nombreDia(S.contexto) : ""}</b><span>${sig ? "Sigue: " + esc(sig.titulo) : "Última de la lista"}</span></div>
+      <div class="pasador__centro"><b>${i + 1} de ${ids.length}${rep(S.contexto) ? " · " + esc(rep(S.contexto).nombre) : ""}</b><span>${sig ? "Sigue: " + esc(sig.titulo) : "Última de la lista"}</span></div>
       <button class="boton boton--icono boton--principal" data-accion="siguiente" ${sig ? "" : "disabled"} aria-label="Alabanza siguiente">${ic("der")}</button>
     </div></nav>`;
   }
@@ -425,7 +557,7 @@
       </form></div>`;
   }
   function vistaEditar() {
-    const c = S.cancionId ? S.canciones[S.cancionId] || {} : {};
+    const c = S.cancionId ? S.canciones[S.cancionId] || {} : S.prefill || {};
     const prev = S.editorPestana === "ver";
     return `<div class="envoltura pagina">
       <div class="fila"><button class="boton boton--plano" data-accion="cancelar-edicion">${ic("izq")} Cancelar</button></div>
@@ -456,7 +588,7 @@
   }
 
   /* ---------- Render ---------- */
-  const SECCION = { inicio: "inicio", cancionero: "cancionero", repertorio: "repertorio", elegir: "repertorio", editar: "cancionero" };
+  const SECCION = { inicio: "inicio", cancionero: "cancionero", repertorio: "repertorio", "rep-editar": "repertorio", elegir: "repertorio", editar: "cancionero" };
   function render() {
     const sec = S.vista === "cancion" ? S.volverA : SECCION[S.vista];
     document.querySelectorAll("[data-nav]").forEach((a) => {
@@ -466,14 +598,16 @@
     });
     pintarCuenta();
     if (S.vista === "editar" && document.getElementById("form-cancion")) return;
+    if (S.vista === "rep-editar" && document.getElementById("form-rep")) return;
     if (S.vista === "equipo" && document.getElementById("form-equipo") && document.activeElement && document.activeElement.form) return;
     const foco = document.activeElement && document.activeElement.id;
     const cursor = foco && document.activeElement.selectionStart;
-    app.innerHTML = { inicio: vistaInicio, cancionero: vistaCancionero, repertorio: vistaRepertorio, elegir: vistaElegir, cancion: vistaCancion, editar: vistaEditar, equipo: vistaEquipo }[S.vista]();
+    app.innerHTML = { inicio: vistaInicio, cancionero: vistaCancionero, repertorio: vistaRepertorio, "rep-editar": vistaRepEditar, elegir: vistaElegir, cancion: vistaCancion, editar: vistaEditar, equipo: vistaEquipo }[S.vista]();
     const pas = pasadorHTML();
     document.getElementById("pasador").innerHTML = pas;
     document.body.classList.toggle("con-pasador", !!pas);
     if (S.vista === "editar") actualizarVistaPrevia();
+    if (S.vista === "rep-editar") resumenLista();
     if (S.vista === "cancion" && S.modo === "presentacion") pintarPresentacion();
     if (foco) { const el = document.getElementById(foco); if (el && el.tagName === "INPUT") { el.focus(); try { el.setSelectionRange(cursor, cursor); } catch (_) {} } }
   }
@@ -497,7 +631,7 @@
   }
   function abrirCancion(id, contexto, modo) {
     if (S.vista !== "cancion") S.volverA = SECCION[S.vista] || "cancionero";
-    S.cancionId = id; S.contexto = contexto || "cancionero"; S.transponer = 0;
+    S.cancionId = id; S.contexto = contexto || "cancionero"; S.transponer = pasosPara(id, S.contexto);
     metro.parar(); metro.bpm = 0;
     if (modo) S.modo = modo;
     irA("cancion");
@@ -505,7 +639,7 @@
   function mover(paso) {
     const ids = listaContexto(), i = ids.indexOf(S.cancionId) + paso;
     if (i < 0 || i >= ids.length) return;
-    S.cancionId = ids[i]; S.transponer = 0; S.borrando = false; metro.parar(); metro.bpm = 0;
+    S.cancionId = ids[i]; S.transponer = pasosPara(ids[i], S.contexto); S.borrando = false; metro.parar(); metro.bpm = 0;
     render(); if (S.modo !== "presentacion") window.scrollTo(0, 0);
   }
 
@@ -572,10 +706,13 @@
   };
 
   /* ---------- WhatsApp y PDF ---------- */
-  function mensajeWhatsApp(f, ids) {
-    return `*Repertorio · ${fechaLarga(f)}*\n\n` + ids.map((id, i) => `${i + 1}. ${S.canciones[id].titulo}`).join("\n") + `\n\n_Ministerio de Alabanza Renovación_`;
+  // El mismo formato con el que el ministerio manda la lista: guiones, separadores y tonos.
+  function mensajeWhatsApp(rid) {
+    const r = rep(rid);
+    return `*${r.nombre.toUpperCase()}*\n` + (r.fecha ? `_${fechaLarga(r.fecha)}_\n` : "") + `\n${escribirLista(r.items || [])}`;
   }
-  async function descargarPDF(fecha, ids) {
+  async function descargarPDF(rid) {
+    const r = rep(rid), fecha = r.fecha ? fechaLarga(r.fecha) : "";
     if (!window.jspdf) return avisar("No se pudo preparar el PDF. Revisa tu conexión y vuelve a cargar la página.", true);
     const doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
     const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 48;
@@ -585,20 +722,29 @@
     const cafe = [58, 42, 30], tostado = [138, 69, 32], gris = [108, 90, 74];
     doc.setTextColor(...gris); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
     doc.text("MINISTERIO DE ALABANZA RENOVACIÓN · ALTO BALLIVIÁN", M, y); y += 30;
-    doc.setTextColor(...cafe); doc.setFont("times", "bold"); doc.setFontSize(28); doc.text("Repertorio", M, y); y += 24;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(14); doc.text(fechaLarga(fecha), M, y); y += 34;
-    ids.forEach((id, i) => {
-      const c = S.canciones[id], t = A.tonoDe(c);
-      doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(...cafe);
-      doc.text(`${i + 1}.`, M, y); doc.text(c.titulo, M + 24, y);
+    doc.setTextColor(...cafe); doc.setFont("times", "bold"); doc.setFontSize(28); doc.splitTextToSize(r.nombre, W - 2 * M).forEach((ln) => { doc.text(ln, M, y); y += 30; }); y -= 6;
+    if (fecha) { doc.setFont("helvetica", "normal"); doc.setFontSize(14); doc.text(fecha, M, y); y += 14; }
+    y += 20;
+    let n = 0;
+    (r.items || []).forEach((it) => {
+      if (!esCancion(it)) {
+        espacio(40); y += 4; doc.setDrawColor(...gris); doc.setLineWidth(0.6); doc.line(M, y - 10, W - M, y - 10);
+        if (it.bloque) { doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(138, 109, 59); doc.text(it.bloque.toUpperCase(), M, y + 4); y += 20; } else y += 4;
+        return;
+      }
+      espacio(22);
+      const t = tonoItem(it);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...cafe);
+      doc.text(it.alt ? "ó" : `${++n}.`, M, y);
+      doc.setFont("helvetica", it.alt ? "normal" : "bold"); doc.text(doc.splitTextToSize(tituloItem(it), W - 2 * M - 80)[0], M + 26, y);
       if (t) { doc.setFont("helvetica", "normal"); doc.setTextColor(...tostado); doc.text(t, W - M, y, { align: "right" }); }
-      y += 24;
+      y += 22;
     });
-    ids.forEach((id, i) => {
-      const c = S.canciones[id], t = A.tonoDe(c);
+    idsDe(rid).filter((id) => S.canciones[id].letra).forEach((id) => {
+      const c = S.canciones[id], pasos = pasosPara(id, rid), t = A.tonoTranspuesto(c, pasos);
       pagina();
       doc.setTextColor(...cafe); doc.setFont("times", "bold"); doc.setFontSize(20);
-      doc.splitTextToSize(`${i + 1}. ${c.titulo}`, W - 2 * M).forEach((ln) => { doc.text(ln, M, y + 6); y += 24; });
+      doc.splitTextToSize(c.titulo, W - 2 * M).forEach((ln) => { doc.text(ln, M, y + 6); y += 24; });
       doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(...gris);
       const sub = [t && "Tono " + t, c.bpm && c.bpm + " BPM", c.categoria, c.autor, c.link].filter(Boolean).join("   ·   ");
       if (sub) doc.splitTextToSize(sub, W - 2 * M).forEach((ln) => { doc.text(ln, M, y); y += 13; });
@@ -610,7 +756,7 @@
           doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(138, 109, 59);
           doc.text(A.nombreSeccion(linea).toUpperCase(), M, y); y += alto; return;
         }
-        const { acordes, letra } = A.lineasMonoespacio(linea, 0, bem);
+        const { acordes, letra } = A.lineasMonoespacio(linea, pasos, bem);
         doc.setFontSize(tam);
         const largo = Math.max(letra.length, acordes ? acordes.length : 0, 1);
         for (let k = 0; k < largo; k += maxCar) {
@@ -624,9 +770,9 @@
     const total = doc.internal.getNumberOfPages();
     for (let p = 1; p <= total; p++) {
       doc.setPage(p); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...gris);
-      doc.text(`${fechaLarga(fecha)} · ${p}/${total}`, W - M, H - 24, { align: "right" });
+      doc.text(`${r.nombre}${fecha ? " · " + fecha : ""} · ${p}/${total}`, W - M, H - 24, { align: "right" });
     }
-    try { await S.fuente.descargar(`Repertorio ${fecha}.pdf`, doc.output("blob")); avisar("PDF listo."); }
+    try { await S.fuente.descargar(`${r.nombre}${r.fecha ? " " + r.fecha : ""}.pdf`, doc.output("blob")); avisar("PDF listo."); }
     catch (e) {
       if (e && e.code === "declined") return;
       if (e && e.code === "rate_limited") return avisar("Ya hay una descarga esperando tu confirmación.", true);
@@ -648,6 +794,7 @@
     const a = e.target.closest("[data-nav]"); if (!a) return;
     e.preventDefault();
     S.buscar = ""; if (a.dataset.nav !== "cancionero") S.categoria = "";
+    if (a.dataset.nav === "repertorio") S.rep = null;
     irA(a.dataset.nav);
   });
   document.getElementById("cuenta").addEventListener("click", async (e) => {
@@ -665,6 +812,7 @@
 
   app.addEventListener("input", (e) => {
     if (["buscar-lista", "buscar-elegir", "buscar-lateral"].includes(e.target.id)) { S.buscar = e.target.value; render(); }
+    if (e.target.name === "lista") resumenLista();
   });
   app.addEventListener("change", (e) => { if (e.target.id === "orden") { S.orden = e.target.value; render(); } });
 
@@ -680,6 +828,14 @@
       catch (_) { avisar("No se pudo guardar el equipo.", true); }
       return;
     }
+    if (e.target.id === "form-rep") {
+      const f = e.target, l = leerLista(f.lista.value);
+      const nombre = f.nombre.value.trim() || l.nombre || (f.fecha.value ? nombreDia(f.fecha.value) : "Repertorio");
+      if (!f.fecha.value) { f.fecha.focus(); return avisar("Elige la fecha del repertorio.", true); }
+      try { S.rep = await guardarRepertorio(S.rep, { nombre, fecha: f.fecha.value, items: l.items }); irA("repertorio"); avisar("Repertorio guardado."); }
+      catch (err) { errorGuardar(err); }
+      return;
+    }
     if (e.target.id !== "form-cancion") return;
     const f = e.target;
     const datos = {
@@ -692,7 +848,7 @@
     try {
       const id = await S.fuente.guardar("canciones", S.cancionId, datos);
       S.canciones[id] = datos; S.cancionId = id; S.transponer = 0;
-      if (S.volverA === "repertorio" && S.vista === "editar" && !S.contexto.match(/^\d/)) S.contexto = "cancionero";
+      S.prefill = null;
       irA("cancion"); avisar("Alabanza guardada.");
     } catch (err) { errorGuardar(err); }
   });
@@ -700,10 +856,9 @@
   app.addEventListener("click", async (e) => {
     const b = e.target.closest("button, a"); if (!b || b.dataset.nav) return;
     const d = b.dataset;
-    const ids = idsDe(S.dia || finDeSemana(0)[0]);
+    const items = ((rep(S.rep) || {}).items || []).slice();
 
-    if (d.dia) { S.dia = d.dia; return render(); }
-    if (d.irDia) { S.dia = d.irDia; S.semana = 0; return irA("repertorio"); }
+    if (d.rep) { S.rep = d.rep; return irA("repertorio"); }
     if (d.cat !== undefined) { S.categoria = d.cat; if (S.vista !== "cancionero") return irA("cancionero"); return render(); }
     if (d.modoBtn) { if (d.modoBtn === "presentacion") { S.modo = "presentacion"; pintarPresentacion(); } return; }
     if (d.pestana) {
@@ -716,22 +871,32 @@
       return;
     }
     if (d.abrir) return abrirCancion(d.abrir, d.contexto, d.modo);
-    if (d.agregar) return guardarRepertorio(S.dia, [...ids, d.agregar]);
-    if (d.sacar) return guardarRepertorio(S.dia, ids.filter((x) => x !== d.sacar));
-    if (d.quitar !== undefined) { const n = [...ids]; n.splice(+d.quitar, 1); return guardarRepertorio(S.dia, n); }
-    if (d.subir !== undefined) { const i = +d.subir, n = [...ids]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; return guardarRepertorio(S.dia, n); }
-    if (d.bajar !== undefined) { const i = +d.bajar, n = [...ids]; [n[i + 1], n[i]] = [n[i], n[i + 1]]; return guardarRepertorio(S.dia, n); }
+    if (d.agregar) return cambiarItems([...items, { titulo: S.canciones[d.agregar].titulo, tono: "", id: d.agregar }]);
+    if (d.sacar) return cambiarItems(items.filter((it) => enlazada(it) !== d.sacar));
+    if (d.registrar !== undefined) {
+      const it = items[+d.registrar];
+      S.prefill = { titulo: it.titulo, tono: it.tono }; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = "repertorio"; S.contexto = S.rep;
+      return irA("editar");
+    }
 
     const c = S.canciones[S.cancionId];
     switch (d.accion) {
-      case "semana-menos": S.semana--; S.dia = finDeSemana(S.semana)[0]; return render();
-      case "semana-mas": S.semana++; S.dia = finDeSemana(S.semana)[0]; return render();
-      case "semana-hoy": S.semana = 0; S.dia = finDeSemana(0)[0]; return render();
+      case "reps": S.rep = null; return irA("repertorio");
+      case "rep-nuevo": S.rep = null; return irA("rep-editar");
+      case "rep-editar": return irA("rep-editar");
+      case "rep-cancelar": return irA("repertorio");
+      case "rep-borrar": {
+        const r = rep(S.rep);
+        if (!r || !confirm(`¿Borrar el repertorio “${r.nombre}”? Las alabanzas siguen en el cancionero.`)) return;
+        try { await S.fuente.borrar("repertorios", r.id); delete S.repertorios[r.id]; S.rep = null; irA("repertorio"); avisar("Repertorio borrado."); }
+        catch (err) { errorGuardar(err); }
+        return;
+      }
       case "elegir": S.buscar = ""; S.categoria = ""; return irA("elegir");
       case "listo": S.buscar = ""; return irA("repertorio");
       case "limpiar": S.buscar = ""; S.categoria = ""; return render();
       case "copiar": {
-        const txt = mensajeWhatsApp(S.dia, ids);
+        const txt = mensajeWhatsApp(S.rep);
         try { await navigator.clipboard.writeText(txt); avisar("Mensaje copiado. Pégalo en el grupo."); }
         catch (_) {
           const r = document.createRange(); r.selectNodeContents(document.getElementById("mensaje"));
@@ -740,11 +905,11 @@
         }
         return;
       }
-      case "pdf": return descargarPDF(S.dia, ids);
+      case "pdf": return descargarPDF(S.rep);
       case "importar": return importarPendientes();
-      case "nueva": S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
+      case "nueva": S.prefill = null; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
       case "editar": S.editorPestana = "escribir"; return irA("editar");
-      case "cancelar-edicion": return irA(S.cancionId ? "cancion" : S.volverA === "repertorio" ? "elegir" : "cancionero");
+      case "cancelar-edicion": S.prefill = null; return irA(S.cancionId ? "cancion" : S.volverA === "repertorio" ? (S.vista === "editar" && S.contexto === S.rep ? "repertorio" : "elegir") : "cancionero");
       case "volver": return irA(S.volverA || "cancionero");
       case "anterior": return mover(-1);
       case "siguiente": return mover(1);
@@ -767,8 +932,9 @@
       case "borrar-si": {
         const id = S.cancionId;
         try {
-          for (const [f, r] of Object.entries(S.repertorios)) {
-            if ((r.canciones || []).includes(id)) await S.fuente.guardar("repertorios", f, { fecha: f, canciones: r.canciones.filter((x) => x !== id), actualizado: Date.now() });
+          // En los repertorios queda solo el nombre de la alabanza.
+          for (const r of Object.values(S.repertorios)) {
+            if (r.items.some((it) => it.id === id)) await guardarRepertorio(r.id, { items: r.items.map((it) => (it.id === id ? { titulo: tituloItem(it), tono: it.tono || "" } : it)) });
           }
           await S.fuente.borrar("canciones", id);
           delete S.canciones[id]; irA("cancionero"); avisar("Alabanza borrada.");
@@ -790,7 +956,6 @@
 
   /* ---------- Inicio ---------- */
   document.querySelectorAll("[data-emblema]").forEach((el) => { el.innerHTML = emblema(+el.dataset.emblema, el.dataset.fondo || "var(--crema)"); });
-  S.dia = finDeSemana(0)[0];
   const inicial = (location.hash || "").slice(1);
   S.vista = ["cancionero", "repertorio"].includes(inicial) ? inicial : "inicio";
   render();
@@ -806,7 +971,7 @@
     fuente.escuchar("canciones", (datos) => { S.canciones = datos; llego("canciones"); }, fallo);
     fuente.escuchar("repertorios", (datos) => {
       const r = {};
-      for (const [id, x] of Object.entries(datos)) r[id] = { fecha: id, canciones: Array.isArray(x.canciones) ? x.canciones : [] };
+      for (const [id, x] of Object.entries(datos)) r[id] = leerRepertorio(id, x);
       S.repertorios = r; llego("repertorios");
     }, fallo);
   })();
