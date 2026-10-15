@@ -4,7 +4,22 @@
 
   const RE_ACORDE = /^[A-G][#b]?(?:maj|min|dim|aug|sus|add|m|M|\d|\+|-|°|ø|\(|\))*(?:\/[A-G][#b]?)?$/;
   const RE_SECCION = /^\s*\[?\s*(intro|verso|estrofa|coro|pre-?coro|precoro|puente|final|outro|interludio|instrumental|solo|tag|vamp)\b[^\]\[]*\]?\s*:?\s*$/i;
-  const esAcorde = (t) => RE_ACORDE.test(String(t).trim());
+  // Notación latina del ministerio: "+" mayor y "-" menor (do- = Cm, SIB+ = Bb, SOL+ = G, re7 = D7).
+  const LATINAS = { do: "C", re: "D", mi: "E", fa: "F", sol: "G", la: "A", si: "B" };
+  const RE_LATINO = /^(do|re|mi|fa|sol|la|si)([#♯]|[b♭](?![a-z]))?([+-]|m(?!aj)|maj|min|dim|aug|sus|add)?((?:\d|sus|add|dim|maj|\(|\)|\+)*)(?:\/(do|re|mi|fa|sol|la|si)([#b]?))?$/i;
+  function latinoAAmericano(t) {
+    const m = RE_LATINO.exec(String(t).trim());
+    if (!m) return null;
+    // Sin "+", "-", número u otra marca no lo tomamos como acorde: "la", "mi", "si" son palabras.
+    if (!m[3] && !m[4] && !m[2]) return null;
+    const alt = (a) => (a ? (/[#♯]/.test(a) ? "#" : "b") : "");
+    let tipo = (m[3] || "").toLowerCase();
+    tipo = tipo === "+" ? "" : tipo === "-" || tipo === "min" ? "m" : tipo;
+    const bajo = m[5] ? "/" + LATINAS[m[5].toLowerCase()] + alt(m[6]) : "";
+    return LATINAS[m[1].toLowerCase()] + alt(m[2]) + tipo + (m[4] || "") + bajo;
+  }
+  const normalizarAcorde = (t) => { const s = String(t).trim(); return RE_ACORDE.test(s) ? s : latinoAAmericano(s); };
+  const esAcorde = (t) => normalizarAcorde(t) !== null;
 
   // Parte una línea en segmentos {acorde, texto}
   function segmentos(linea) {
@@ -15,7 +30,7 @@
       if (!esAcorde(m[1])) continue;
       actual.texto += linea.slice(ultimo, m.index);
       if (actual.acorde || actual.texto) segs.push(actual);
-      actual = { acorde: m[1].trim(), texto: "" };
+      actual = { acorde: normalizarAcorde(m[1]), texto: "" };
       ultimo = re.lastIndex;
     }
     actual.texto += linea.slice(ultimo);
@@ -46,12 +61,12 @@
         const ultimaCol = acordes[acordes.length - 1].col;
         let letra = sig.length < ultimaCol ? sig.padEnd(ultimaCol, " ") : sig;
         for (let k = acordes.length - 1; k >= 0; k--) {
-          letra = letra.slice(0, acordes[k].col) + `[${acordes[k].ch}]` + letra.slice(acordes[k].col);
+          letra = letra.slice(0, acordes[k].col) + `[${normalizarAcorde(acordes[k].ch)}]` + letra.slice(acordes[k].col);
         }
         fuera.push(letra.replace(/\s+$/, ""));
         i++;
       } else {
-        fuera.push(acordes.map((a) => `[${a.ch}]`).join(" "));
+        fuera.push(acordes.map((a) => `[${normalizarAcorde(a.ch)}]`).join(" "));
       }
     }
     return fuera.join("\n");
@@ -115,7 +130,7 @@
   }
 
   global.Acordes = {
-    esAcorde, segmentos, esSeccion, nombreSeccion, convertirAcordesArriba,
+    esAcorde, normalizarAcorde, segmentos, esSeccion, nombreSeccion, convertirAcordesArriba,
     usaBemoles, transponerAcorde, tonoDe, tonoTranspuesto, quinta, lineasMonoespacio,
   };
 })(window);

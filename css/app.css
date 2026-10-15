@@ -221,9 +221,11 @@ select.campo { min-height: 40px; padding: 0 36px 0 14px; border-radius: 999px; a
 .letra { font-size: var(--letra); line-height: 1.35; display: grid; gap: 2px; overflow-wrap: anywhere; }
 .ln { min-height: 1.35em; }
 .ln.con-acordes .seg { padding-top: 1.2em; }
-.seg { display: inline-block; position: relative; white-space: pre-wrap; }
+.ln.con-acordes { white-space: pre-wrap; }
+.pal { white-space: nowrap; }
+.seg { display: inline-block; position: relative; white-space: pre; }
 .seg .ch { position: absolute; left: 0; top: 0; font-weight: 800; color: var(--acorde); font-size: .86em; white-space: nowrap; line-height: 1.35; }
-.seg.solo { min-width: 2.4em; }
+.seg[style] { min-width: calc(var(--ac) * .54em + .35em); }
 .parte { font-weight: 800; font-size: .8125rem; letter-spacing: .12em; text-transform: uppercase; color: var(--seccion); margin-top: 18px; }
 .parte:first-child { margin-top: 0; }
 
@@ -241,7 +243,7 @@ select.campo { min-height: 40px; padding: 0 36px 0 14px; border-radius: 999px; a
 .presentacion .boton--principal { background: var(--tinta-inv); color: var(--cafe-osc); border-color: var(--tinta-inv); }
 .presentacion__pie span { font-size: .875rem; opacity: .75; text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .presentacion:not(.con-acordes) .seg .ch { display: none; }
-.presentacion:not(.con-acordes) .ln.con-acordes .seg { padding-top: 0; }
+.presentacion:not(.con-acordes) .ln.con-acordes .seg { padding-top: 0; min-width: 0; }
 
 /* ---------- Repertorio ---------- */
 .semana { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: stretch; max-width: 40rem; }

@@ -136,10 +136,29 @@
       if (A.esSeccion(l)) return `<div class="parte">${esc(A.nombreSeccion(l))}</div>`;
       const segs = A.segmentos(l);
       if (!segs.some((s) => s.acorde)) return `<div class="ln">${esc(l) || "&nbsp;"}</div>`;
-      return `<div class="ln con-acordes">${segs.map((s) => {
-        const ch = s.acorde ? `<b class="ch">${esc(A.transponerAcorde(s.acorde, pasos, bem))}</b>` : "";
-        return `<span class="seg${s.acorde && !s.texto.trim() ? " solo" : ""}">${ch}${esc(s.texto) || "&nbsp;"}</span>`;
-      }).join("")}</div>`;
+      // Cada acorde va sobre el inicio de su fragmento; la palabra donde cae el acorde no se parte al
+      // cambiar de renglón (en el celular "cas-tillo" quedaba separado en dos líneas).
+      let html = "", grupo = "";
+      const cerrar = () => { if (grupo) html += `<span class="pal">${grupo}</span>`; grupo = ""; };
+      const texto = (t) => {
+        const k = t.search(/\s\S*$/);
+        if (k < 0) { grupo += esc(t); return; }
+        const corte = k + 1;
+        grupo += esc(t.slice(0, t.search(/\s/))); cerrar();
+        html += esc(t.slice(t.search(/\s/), corte)); grupo = esc(t.slice(corte));
+      };
+      for (const s of segs) {
+        if (!s.acorde) { texto(s.texto); continue; }
+        const ac = A.transponerAcorde(s.acorde, pasos, bem);
+        const primero = /^\S*/.exec(s.texto)[0];
+        // El fragmento mide al menos lo que su acorde, así dos acordes seguidos no se montan.
+        const corto = s.texto.length <= ac.length + 1;
+        grupo += `<span class="seg"${corto ? ` style="--ac:${ac.length}"` : ""}><b class="ch">${esc(ac)}</b>${esc(primero) || "&#8203;"}</span>`;
+        const resto = s.texto.slice(primero.length);
+        if (resto) texto(resto);
+      }
+      cerrar();
+      return `<div class="ln con-acordes">${html}</div>`;
     }).join("");
   }
 
@@ -204,6 +223,33 @@
       <span class="fila-cancion__tono">${esc(t)}${ic("der")}</span></button></li>`;
   }
 
+  /* ---------- Importar alabanzas (líderes) ----------
+     importar/canciones.json trae alabanzas transcritas para cargarlas de una vez con la cuenta del líder.
+     Solo se agregan las que todavía no existen (se compara por nombre). */
+  let paraImportar = null;
+  const clave = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  function pendientesImportar() {
+    if (!puede("borrar")) return [];
+    if (paraImportar === null) {
+      paraImportar = [];
+      fetch("importar/canciones.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).then((l) => {
+        paraImportar = Array.isArray(l) ? l.filter((c) => c && c.titulo && c.letra) : []; render();
+      }).catch(() => {});
+    }
+    const hay = new Set(todas().map((c) => clave(c.titulo)));
+    return paraImportar.filter((c) => !hay.has(clave(c.titulo)));
+  }
+  async function importarPendientes() {
+    const lista = pendientesImportar();
+    if (!lista.length || !confirm(`¿Agregar ${lista.length} alabanzas al cancionero?\n\n${lista.map((c) => "• " + c.titulo).join("\n")}`)) return;
+    let n = 0;
+    for (const c of lista) {
+      const datos = { titulo: c.titulo, autor: c.autor || "", tono: c.tono || "", bpm: c.bpm || "", categoria: c.categoria || "", link: c.link || "", letra: c.letra, actualizado: Date.now() };
+      try { const id = await S.fuente.guardar("canciones", null, datos); S.canciones[id] = datos; n++; } catch (err) { errorGuardar(err); break; }
+    }
+    render(); if (n) avisar(`${n} alabanzas agregadas.`);
+  }
+
   function vistaCancionero() {
     const lista = filtradas(), total = todas().length;
     const cuenta = (id) => todas().filter((c) => c.categoria === id).length;
@@ -211,7 +257,8 @@
       ${avisos()}
       <div class="fila fila--entre">
         <div class="seccion-titulo"><h1>Cancionero</h1><p>Busca, practica y adora.</p></div>
-        ${puede("editar") ? `<button class="boton boton--principal" data-accion="nueva">${ic("mas")} Nueva alabanza</button>` : ""}
+        <div class="fila">${(() => { const n = pendientesImportar().length; return n ? `<button class="boton" data-accion="importar">${ic("bajar")} Importar ${n} ${n === 1 ? "alabanza" : "alabanzas"}</button>` : ""; })()}
+        ${puede("editar") ? `<button class="boton boton--principal" data-accion="nueva">${ic("mas")} Nueva alabanza</button>` : ""}</div>
       </div>
       <label class="buscador">${ic("buscar")}<input class="campo" id="buscar-lista" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar canción, autor, tono o una frase" value="${esc(S.buscar)}" aria-label="Buscar canción"></label>
       <div class="cancionero">
@@ -694,6 +741,7 @@
         return;
       }
       case "pdf": return descargarPDF(S.dia, ids);
+      case "importar": return importarPendientes();
       case "nueva": S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
       case "editar": S.editorPestana = "escribir"; return irA("editar");
       case "cancelar-edicion": return irA(S.cancionId ? "cancion" : S.volverA === "repertorio" ? "elegir" : "cancionero");
