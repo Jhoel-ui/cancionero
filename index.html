@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Cancionero Renovación</title>
+<meta name="description" content="Alabanzas con acordes y repertorios del Ministerio de Alabanza Renovación, Alto Ballivián.">
+<meta name="theme-color" content="#f7f1e6">
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700;800&family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="cabecera">
+  <div class="envoltura cabecera__fila">
+    <a class="marca" href="#inicio" data-nav="inicio" aria-label="Renovación, inicio">
+      <span data-emblema="52"></span>
+      <span class="marca__texto"><small>Ministerio de Alabanza</small><b>Renovación</b></span>
+    </a>
+    <nav class="menu" aria-label="Secciones">
+      <a href="#inicio" data-nav="inicio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>Inicio</a>
+      <a href="#cancionero" data-nav="cancionero"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Cancionero</a>
+      <a href="#repertorio" data-nav="repertorio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>Repertorio</a>
+    </nav>
+    <div class="cabecera__cuenta" id="cuenta"></div>
+  </div>
+</header>
+
+<main class="envoltura pagina" id="app"></main>
+<div id="pasador"></div>
+
+<footer class="pie">
+  <div class="envoltura">
+    <div class="pie__marca">
+      <span data-emblema="56" data-fondo="var(--cafe-osc)"></span>
+      <div><b>Ministerio de Alabanza Renovación</b><span>Alto Ballivián</span></div>
+    </div>
+    <blockquote>Servid a Jehová con alegría; venid ante su presencia con regocijo.<cite>Salmos 100:2</cite></blockquote>
+  </div>
+</footer>
+
+<nav class="barra" aria-label="Secciones">
+  <div class="envoltura">
+    <a href="#inicio" data-nav="inicio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>Inicio</a>
+    <a href="#cancionero" data-nav="cancionero"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Cancionero</a>
+    <a href="#repertorio" data-nav="repertorio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>Repertorio</a>
+  </div>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="js/config.js"></script>
+<script src="js/acordes.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

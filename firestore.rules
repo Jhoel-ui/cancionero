@@ -1,0 +1,29 @@
+rules_version = '2';
+// Cualquiera con el link puede ver. Editar: miembros del equipo con su cuenta de Google.
+// Borrar alabanzas y cambiar el equipo: solo líderes. La lista está en config/equipo:
+//   { miembros: ["correo@gmail.com", ...], lideres: ["correo@gmail.com", ...] }
+// El dueño siempre es líder (así puede crear la lista desde la página, en "Equipo").
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function rutaEquipo() { return /databases/$(database)/documents/config/equipo; }
+    function equipo() { return get(rutaEquipo()).data; }
+    function correo() { return request.auth.token.email.lower(); }
+    function dueno() { return request.auth != null && correo() == "rojasaire@gmail.com"; }
+    function lider() { return dueno() || (request.auth != null && exists(rutaEquipo()) && correo() in equipo().lideres); }
+    function miembro() { return lider() || (request.auth != null && exists(rutaEquipo()) && correo() in equipo().miembros); }
+
+    match /canciones/{id} {
+      allow read: if true;
+      allow create, update: if miembro();
+      allow delete: if lider();
+    }
+    match /repertorios/{fecha} {
+      allow read: if true;
+      allow write: if miembro();
+    }
+    match /config/{doc} {
+      allow read: if request.auth != null;
+      allow write: if lider();
+    }
+  }
+}
