@@ -22,7 +22,7 @@ service cloud.firestore {
       allow read, create, update: if miembro();
       allow delete: if lider();
     }
-        match /repertorios/{fecha} {
+    match /repertorios/{fecha} {
       allow read: if true;
       allow write: if miembro();
     }
