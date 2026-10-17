@@ -74,6 +74,7 @@
   };
   let tamLetra = pref.leer("letra", 1.25);
   let presAcordes = pref.leer("pres-acordes", true);
+  let fsAcordes = pref.leer("fs-acordes", false);
   document.documentElement.style.setProperty("--letra", tamLetra + "rem");
 
   /* ---------- Utilidades ---------- */
@@ -422,9 +423,16 @@
         <div class="fila">${primera ? `<button class="boton boton--principal" data-abrir="${primera}" data-contexto="${r.id}" data-modo="presentacion">${ic("pantalla")} Presentar en vivo</button>` : ""}
           <button class="boton" data-accion="pdf">${ic("bajar")} Descargar PDF</button></div>
       </div>
-      <aside class="panel"><h2>Enviar al grupo de WhatsApp</h2><pre class="mensaje" id="mensaje">${esc(txt)}</pre>
+      <aside class="lado"><section class="panel"><h2>Enviar al grupo de WhatsApp</h2><pre class="mensaje" id="mensaje">${esc(txt)}</pre>
         <div class="fila"><button class="boton boton--principal" data-accion="copiar">${ic("copiar")} Copiar</button>
-        <a class="boton" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic("mensaje")} Abrir WhatsApp</a></div></aside>
+        <a class="boton" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic("mensaje")} Abrir WhatsApp</a></div></section>
+        <section class="panel"><h2>Llevar a FreeShow</h2>
+          <p class="ayuda">Arma el proyecto “${esc(r.nombre)}” con las alabanzas en orden. Si ya tienes la presentación “REN - nombre”, se usa esa.</p>
+          <label class="casilla"><input type="checkbox" id="fs-acordes" ${fsAcordes ? "checked" : ""}> Incluir acordes</label>
+          <div class="fila"><button class="boton boton--principal" data-accion="fs-enviar" ${S.enviandoFS ? "disabled" : ""}>${ic("pantalla")} ${S.enviandoFS ? "Enviando…" : "Enviar a FreeShow"}</button>
+            <button class="boton" data-accion="fs-proyecto">${ic("bajar")} Descargar proyecto</button></div>
+          <p class="ayuda ayuda--chica" id="fs-estado" aria-live="polite">${esc((S.estadoFS && S.estadoFS.rid === r.id && S.estadoFS.t) || "Para enviar, abre el Cancionero en la computadora de proyección con FreeShow abierto. El archivo se importa en FreeShow con Importar › Proyecto.")}</p>
+        </section></aside>
       </div>` : `<div class="vacio"><b>Este repertorio está vacío</b>${editable ? `<button class="boton boton--principal" data-accion="rep-editar">${ic("lapiz")} Escribir la lista</button>` : ""}</div>`}
     </div>`;
   }
@@ -519,7 +527,8 @@
             <header class="hoja__cab"><div><h1>${esc(c.titulo)}</h1>${detalle(c) ? `<p>${esc(detalle(c))}</p>` : ""}</div>
               <div class="fila">${tonoFinal ? `<span class="hoja__tono">Tono: <b>${esc(tonoFinal)}</b></span>` : ""}
                 ${S.transponer ? `<button class="boton boton--chico" data-accion="tono-original">Volver a ${esc(A.tonoDe(c))}</button>` : ""}
-                ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}</div></header>
+                ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}
+                ${c.letra ? `<button class="boton boton--chico" data-accion="fs-texto" title="Texto para importar en FreeShow (Importar › Texto)">${ic("bajar")} Para FreeShow</button>` : ""}</div></header>
             <div class="letra">${letraHTML(c.letra, S.transponer, tonoFinal) || '<p class="ayuda">Esta alabanza todavía no tiene letra.</p>'}</div>
           </article>
           ${puede("editar") ? (S.borrando
@@ -780,6 +789,65 @@
     }
   }
 
+  /* ---------- FreeShow ---------- */
+  const nombreArchivo = (t) => String(t || "alabanza").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+  async function descargar(nombre, contenido, tipo) {
+    try { await S.fuente.descargar(nombre, new Blob([contenido], { type: tipo })); return true; }
+    catch (e) {
+      if (e && e.code === "declined") return false;
+      avisar(e && e.code === "rate_limited" ? "Ya hay una descarga esperando tu confirmación." : "No se pudo descargar el archivo aquí.", true);
+      return false;
+    }
+  }
+  // El repertorio en orden: partes con nombre como secciones y cada alabanza en el tono del repertorio.
+  function pasosFreeShow(rid) {
+    return ((rep(rid) || {}).items || []).map((it) => {
+      if (!esCancion(it)) return it.bloque ? { tipo: "seccion", nombre: it.bloque } : null;
+      const id = enlazada(it), c = id ? S.canciones[id] : null;
+      return { tipo: "cancion", titulo: tituloItem(it), c, tono: c && it.tono ? it.tono : c ? A.tonoDe(c) : it.tono, pasos: c && it.tono ? A.pasosEntre(A.tonoDe(c), it.tono) : 0 };
+    }).filter(Boolean);
+  }
+  const listaNombres = (l) => l.length > 3 ? `${l.slice(0, 3).join(", ")} y ${l.length - 3} más` : l.join(", ");
+  async function textoFreeShow(c) {
+    if (await descargar(nombreArchivo(c.titulo) + ".txt", window.FreeShow.texto(c, S.transponer, fsAcordes), "text/plain;charset=utf-8"))
+      avisar("Listo. En FreeShow: Importar › Texto.");
+  }
+  async function proyectoFreeShow(rid) {
+    const r = rep(rid), pasos = pasosFreeShow(rid);
+    const conLetra = pasos.filter((p) => p.tipo !== "cancion" || (p.c && p.c.letra));
+    const faltan = pasos.filter((p) => p.tipo === "cancion" && !(p.c && p.c.letra)).map((p) => p.titulo);
+    if (!conLetra.some((p) => p.tipo === "cancion")) return avisar("Ninguna alabanza de este repertorio tiene letra todavía.", true);
+    const nombre = r.nombre + (r.fecha ? " " + fechaCorta(r.fecha) : "");
+    const datos = window.FreeShow.proyecto(nombre, conLetra, fsAcordes);
+    if (await descargar(nombreArchivo(nombre) + ".project", JSON.stringify(datos), "application/json"))
+      avisar(faltan.length ? `Proyecto listo. Sin letra, no van: ${listaNombres(faltan)}.` : "Proyecto listo. En FreeShow: Importar › Proyecto.");
+  }
+  function estadoFS(t) { S.estadoFS = { rid: S.rep, t }; const el = document.getElementById("fs-estado"); if (el) el.textContent = t; }
+  async function enviarFreeShow(rid) {
+    if (S.enviandoFS) return;
+    const r = rep(rid), nombre = r.nombre + (r.fecha ? " " + fechaCorta(r.fecha) : "");
+    S.enviandoFS = true; estadoFS("Buscando FreeShow en esta computadora…"); render();
+    const opciones = { clave: pref.leer("fs-clave", "") };
+    try {
+      const { usadas, creadas, faltan } = await window.FreeShow.enviarRepertorio(nombre, pasosFreeShow(rid), fsAcordes, opciones, estadoFS);
+      const partes = [usadas && `${usadas} con tu diseño`, creadas && (creadas === 1 ? "1 nueva solo con la letra" : `${creadas} nuevas solo con la letra`)].filter(Boolean).join(" y ");
+      estadoFS(`Proyecto “${nombre}” listo en FreeShow${partes ? ": " + partes : ""}.${faltan.length ? ` Faltan: ${listaNombres(faltan)}.` : ""}`);
+      avisar("Enviado a FreeShow.");
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "clave") {
+        const k = prompt("FreeShow pide la clave de la API (Ajustes › Conexiones):", "");
+        if (k) { pref.guardar("fs-clave", k.trim()); S.enviandoFS = false; return enviarFreeShow(rid); }
+      }
+      estadoFS({
+        "sin-freeshow": "No encontré FreeShow. Ábrelo en esta computadora y activa la API en Ajustes › Conexiones (WebSocket/REST). Si el navegador pregunta por acceso a la red local, toca Permitir.",
+        "sin-red": "No se pudo cargar la conexión. Revisa el internet y vuelve a intentar.",
+        clave: "FreeShow pide una clave. Escríbela cuando la pregunte.",
+        "sin-proyecto": "FreeShow no creó el proyecto. Prueba de nuevo o usa Descargar proyecto.",
+      }[code] || "Algo falló al enviar. Prueba de nuevo o usa Descargar proyecto.");
+    } finally { S.enviandoFS = false; render(); }
+  }
+
   /* ---------- Gestos ---------- */
   let toque = null;
   document.addEventListener("pointerdown", (e) => { if (e.pointerType === "touch" && S.vista === "cancion") toque = { x: e.clientX, y: e.clientY }; });
@@ -814,7 +882,10 @@
     if (["buscar-lista", "buscar-elegir", "buscar-lateral"].includes(e.target.id)) { S.buscar = e.target.value; render(); }
     if (e.target.name === "lista") resumenLista();
   });
-  app.addEventListener("change", (e) => { if (e.target.id === "orden") { S.orden = e.target.value; render(); } });
+  app.addEventListener("change", (e) => {
+    if (e.target.id === "orden") { S.orden = e.target.value; render(); }
+    if (e.target.id === "fs-acordes") { fsAcordes = e.target.checked; pref.guardar("fs-acordes", fsAcordes); }
+  });
 
   app.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -906,6 +977,9 @@
         return;
       }
       case "pdf": return descargarPDF(S.rep);
+      case "fs-texto": return c && textoFreeShow(c);
+      case "fs-proyecto": return proyectoFreeShow(S.rep);
+      case "fs-enviar": return enviarFreeShow(S.rep);
       case "importar": return importarPendientes();
       case "nueva": S.prefill = null; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
       case "editar": S.editorPestana = "escribir"; return irA("editar");

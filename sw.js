@@ -1,6 +1,6 @@
 // Guarda la página en el teléfono para que abra sin señal.
-const CACHE = "cancionero-v2";
-const ARCHIVOS = ["./", "index.html", "css/app.css", "js/config.js", "js/acordes.js", "js/datos.js", "js/app.js",
+const CACHE = "cancionero-v3";
+const ARCHIVOS = ["./", "index.html", "css/app.css", "js/config.js", "js/acordes.js", "js/datos.js", "js/freeshow.js", "js/app.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
 
 self.addEventListener("install", (e) => {
@@ -12,6 +12,7 @@ self.addEventListener("activate", (e) => {
 // Primero la red (para tener siempre lo último); si no hay señal, lo guardado.
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return; // FreeShow en esta computadora
   if (e.request.method !== "GET" || url.hostname.endsWith("googleapis.com") && url.pathname.includes("/google.firestore")) return;
   e.respondWith(
     fetch(e.request).then((r) => {
