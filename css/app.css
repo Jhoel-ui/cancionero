@@ -287,6 +287,9 @@ span.cancion { cursor: default; }
 .formulario { display: grid; gap: 16px; max-width: 46rem; }
 .etiqueta { display: grid; gap: 6px; font-weight: 700; font-size: .9375rem; }
 .ayuda { font-size: .9375rem; color: var(--tinta-2); max-width: 62ch; }
+.casilla { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--crema); font-size: .9375rem; cursor: pointer; }
+.casilla input { width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: var(--cafe); }
+.casilla .i { width: 16px; height: 16px; vertical-align: -2px; }
 .tres { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 textarea.campo { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 15px; line-height: 1.6; resize: vertical; min-height: 20rem; }
 @media (pointer: coarse) { textarea.campo { font-size: 16px; } }

@@ -29,6 +29,7 @@
     check: '<path d="M20 6 9 17l-5-5"/>', info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
     pantalla: '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
     metronomo: '<path d="M12 11.5 18 4"/><path d="M8.5 3h7l4 18H4.5Z"/><path d="M7 15h10"/>',
+    candado: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 
@@ -59,6 +60,7 @@
   const S = {
     vista: "inicio",       // inicio | cancionero | repertorio | rep-editar | elegir | cancion | editar
     canciones: {}, repertorios: {},
+    publicas: {}, privadas: {}, // "canciones" (las ve cualquiera) y "canciones_equipo" (solo el equipo)
     rep: null, prefill: null,
     categoria: "", orden: "az", buscar: "",
     cancionId: null, contexto: "cancionero", volverA: "cancionero",
@@ -187,7 +189,26 @@
       ? l.sort((a, b) => (b.actualizado || 0) - (a.actualizado || 0))
       : l.sort((a, b) => normal(a.titulo).localeCompare(normal(b.titulo)));
   }
-  const detalle = (c) => [c.categoria, c.autor].filter(Boolean).join(" · ");
+  const detalle = (c) => [c.privada && "Solo equipo", c.categoria, c.autor].filter(Boolean).join(" · ");
+  // Las alabanzas "solo equipo" (de otros artistas) viven en otra colección que solo leen los miembros.
+  const coleccionDe = (privada) => (privada ? "canciones_equipo" : "canciones");
+  function unirCanciones() {
+    const priv = {};
+    for (const [id, c] of Object.entries(S.privadas)) priv[id] = { ...c, privada: true };
+    S.canciones = { ...S.publicas, ...priv };
+  }
+  async function guardarCancion(id, datos, privada) {
+    const { privada: _p, ...limpio } = datos;
+    if (privada) limpio.privada = true;
+    const antes = id && S.canciones[id];
+    const nuevoId = await S.fuente.guardar(coleccionDe(privada), id, limpio);
+    // Si cambió de pública a solo equipo (o al revés), se borra de la colección anterior.
+    if (antes && !!antes.privada !== !!privada) await S.fuente.borrar(coleccionDe(antes.privada), id);
+    (privada ? S.privadas : S.publicas)[nuevoId] = limpio;
+    if (antes && !!antes.privada !== !!privada) delete (antes.privada ? S.privadas : S.publicas)[id];
+    unirCanciones();
+    return nuevoId;
+  }
 
   /* ---------- Avisos ---------- */
   let toastT;
@@ -338,7 +359,7 @@
     let n = 0;
     for (const c of lista) {
       const datos = { titulo: c.titulo, autor: c.autor || "", tono: c.tono || "", bpm: c.bpm || "", categoria: c.categoria || "", link: c.link || "", letra: c.letra, actualizado: Date.now() };
-      try { const id = await S.fuente.guardar("canciones", null, datos); S.canciones[id] = datos; n++; } catch (err) { errorGuardar(err); break; }
+      try { await guardarCancion(null, datos, !!c.privada); n++; } catch (err) { errorGuardar(err); break; }
     }
     render(); if (n) avisar(`${n} alabanzas agregadas.`);
   }
@@ -572,6 +593,7 @@
         <label class="etiqueta">Categoría<select class="campo" id="f-categoria" name="categoria" style="border-radius:12px;min-height:48px">
           <option value="">Sin categoría</option>${CATEGORIAS.map((x) => `<option ${c.categoria === x.id ? "selected" : ""}>${x.id}</option>`).join("")}</select></label>
         <label class="etiqueta">Link de la versión que seguimos<input class="campo" id="f-link" name="link" type="url" inputmode="url" autocapitalize="none" placeholder="https://youtube.com/…" value="${esc(c.link)}"></label>
+        <label class="casilla"><input type="checkbox" name="privada" ${c.privada ? "checked" : ""}><span>${ic("candado")} <b>Solo equipo</b>: no aparece en la página pública, solo la ven los que inician sesión. Úsalo para alabanzas de otros artistas.</span></label>
         <div style="display:grid;gap:10px">
           <div class="fila fila--entre"><span class="etiqueta">Letra con acordes</span>
             <div class="segmentos" role="tablist">
@@ -846,8 +868,8 @@
     if (!datos.titulo) { f.titulo.focus(); return avisar("Escribe el nombre de la alabanza.", true); }
     if (datos.link && !/^https?:\/\//i.test(datos.link)) datos.link = "https://" + datos.link;
     try {
-      const id = await S.fuente.guardar("canciones", S.cancionId, datos);
-      S.canciones[id] = datos; S.cancionId = id; S.transponer = 0;
+      const id = await guardarCancion(S.cancionId, datos, f.privada.checked);
+      S.cancionId = id; S.transponer = 0;
       S.prefill = null;
       irA("cancion"); avisar("Alabanza guardada.");
     } catch (err) { errorGuardar(err); }
@@ -936,8 +958,9 @@
           for (const r of Object.values(S.repertorios)) {
             if (r.items.some((it) => it.id === id)) await guardarRepertorio(r.id, { items: r.items.map((it) => (it.id === id ? { titulo: tituloItem(it), tono: it.tono || "" } : it)) });
           }
-          await S.fuente.borrar("canciones", id);
-          delete S.canciones[id]; irA("cancionero"); avisar("Alabanza borrada.");
+          const priv = S.canciones[id] && S.canciones[id].privada;
+          await S.fuente.borrar(coleccionDe(priv), id);
+          delete (priv ? S.privadas : S.publicas)[id]; unirCanciones(); irA("cancionero"); avisar("Alabanza borrada.");
         } catch (err) { errorGuardar(err); }
         return;
       }
@@ -964,11 +987,22 @@
     try { fuente = await window.Datos.conectar(); } catch (_) {}
     if (!fuente) { S.sinConexion = true; S.cargado = true; S.fuente = { permisos: {} }; return render(); }
     S.fuente = fuente;
-    if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => render());
     const llegaron = new Set();
     const llego = (k) => { llegaron.add(k); if (llegaron.size === 2) S.cargado = true; render(); };
     const fallo = () => { S.sinConexion = true; S.cargado = true; render(); };
-    fuente.escuchar("canciones", (datos) => { S.canciones = datos; llego("canciones"); }, fallo);
+    fuente.escuchar("canciones", (datos) => { S.publicas = datos; unirCanciones(); llego("canciones"); }, fallo);
+    // Las de "solo equipo" se cargan cuando entra alguien del equipo y se quitan al salir.
+    let dejarPrivadas = null;
+    const verPrivadas = () => {
+      const miembro = !!(fuente.permisos && fuente.permisos.editar);
+      if (miembro && !dejarPrivadas) {
+        dejarPrivadas = fuente.escuchar("canciones_equipo", (datos) => { S.privadas = datos; unirCanciones(); render(); }, () => {}) || (() => {});
+      } else if (!miembro && dejarPrivadas) {
+        dejarPrivadas(); dejarPrivadas = null; S.privadas = {}; unirCanciones();
+      }
+    };
+    verPrivadas();
+    if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => { verPrivadas(); render(); });
     fuente.escuchar("repertorios", (datos) => {
       const r = {};
       for (const [id, x] of Object.entries(datos)) r[id] = leerRepertorio(id, x);

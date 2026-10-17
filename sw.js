@@ -1,5 +1,5 @@
 // Guarda la página en el teléfono para que abra sin señal.
-const CACHE = "cancionero-v2";
+const CACHE = "cancionero-v3";
 const ARCHIVOS = ["./", "index.html", "css/app.css", "js/config.js", "js/acordes.js", "js/datos.js", "js/app.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
 

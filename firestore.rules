@@ -1,5 +1,5 @@
 rules_version = '2';
-// Cualquiera con el link puede ver. Editar: miembros del equipo con su cuenta de Google.
+// Cualquiera con el link puede ver (menos las alabanzas "solo equipo"). Editar: miembros del equipo con su cuenta de Google.
 // Borrar alabanzas y cambiar el equipo: solo líderes. La lista está en config/equipo:
 //   { miembros: ["correo@gmail.com", ...], lideres: ["correo@gmail.com", ...] }
 // El dueño siempre es líder (así puede crear la lista desde la página, en "Equipo").
@@ -17,7 +17,12 @@ service cloud.firestore {
       allow create, update: if miembro();
       allow delete: if lider();
     }
-    match /repertorios/{fecha} {
+    // Alabanzas "solo equipo" (de otros artistas): no se ven en la página pública.
+    match /canciones_equipo/{id} {
+      allow read, create, update: if miembro();
+      allow delete: if lider();
+    }
+        match /repertorios/{fecha} {
       allow read: if true;
       allow write: if miembro();
     }
