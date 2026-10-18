@@ -380,13 +380,30 @@ textarea.campo { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, C
 .presentacion__cab > div { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .presentacion__cab .fila { flex-wrap: nowrap; }
 
-/* Visor de partituras: hojas blancas a todo el ancho, se desliza hacia abajo. */
+/* Partituras: hojas blancas; se acercan con zoom (--zoom) y se deslizan en las dos direcciones. */
+.partitura { overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; display: grid; gap: 20px; align-content: start; justify-items: start; }
+.partitura section { display: grid; gap: 8px; width: calc(min(100%, 900px) * var(--zoom, 1)); margin-inline: auto; }
+.partitura h2 { color: var(--tinta-2); font-size: .95rem; letter-spacing: .02em; margin: 8px 4px 0; }
+.partitura img { display: block; width: 100%; height: auto; background: #fff; border-radius: 6px; box-shadow: 0 0 0 1px var(--linea); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.hoja--partitura { gap: 14px; }
+@media (max-width: 640px) { .hoja--partitura { padding: 12px; } .hoja--partitura .hoja__cab { padding: 6px 6px 12px; } }
+.segmentos--ver button { padding: 0 12px; }
+.zoom-num { min-width: 3.2em; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* Visor de partituras a pantalla completa. */
 .visor { position: fixed; inset: 0; z-index: 55; background: var(--cafe-osc); display: grid; grid-template-rows: auto minmax(0, 1fr); }
-.visor__cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 18px; padding-top: max(10px, env(safe-area-inset-top)); color: var(--tinta-inv); }
-.visor__cab b { font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.visor__cab .boton { background: rgb(255 255 255 / .08); border-color: rgb(255 255 255 / .14); color: var(--tinta-inv); flex: none; }
-.visor__hojas { overflow-y: auto; overscroll-behavior: contain; padding: 0 8px calc(24px + env(safe-area-inset-bottom)); display: grid; gap: 20px; align-content: start; justify-items: center; }
-.visor__hojas section { display: grid; gap: 8px; width: min(100%, 900px); }
-.visor__hojas h2 { color: #d9bf86; font-size: .95rem; letter-spacing: .02em; margin: 8px 4px 0; }
-.visor__hojas img { display: block; width: 100%; height: auto; background: #fff; border-radius: 6px; }
+.visor__cab { display: flex; align-items: center; gap: 8px; padding: 8px 10px; padding-top: max(8px, env(safe-area-inset-top)); color: var(--tinta-inv); }
+.visor__cab > b { flex: 1; min-width: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.visor__herr { display: flex; align-items: center; gap: 6px; flex: none; }
+.visor__herr .control > span { display: none; }
+.visor .boton { background: rgb(255 255 255 / .08); border-color: rgb(255 255 255 / .14); color: var(--tinta-inv); flex: none; }
+.visor .boton:disabled { opacity: .35; }
+.visor__hojas { padding: 0 8px calc(24px + env(safe-area-inset-bottom)); }
+.visor__hojas h2 { color: #d9bf86; }
+.visor__hojas img { box-shadow: none; }
+.visor__vacio { color: var(--tinta-inv); opacity: .8; padding: 24px 12px; }
+@media (max-width: 560px) { .visor .zoom-num { display: none; } }
+/* Si el teléfono no deja girar la pantalla (iPhone), se gira el visor. */
+.visor--girado { inset: auto; top: 0; left: 100vw; width: 100vh; height: 100vw; width: 100dvh; height: 100dvw; transform-origin: top left; transform: rotate(90deg); }
 body.sin-scroll { overflow: hidden; }
+.visor .zoom-num { color: var(--tinta-inv); }

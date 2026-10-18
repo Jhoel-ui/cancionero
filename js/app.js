@@ -31,6 +31,7 @@
     asa: '<circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>',
     orden: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
     metronomo: '<path d="M12 11.5 18 4"/><path d="M8.5 3h7l4 18H4.5Z"/><path d="M7 15h10"/>',
+    girar: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     candado: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
@@ -70,6 +71,7 @@
     compartir: false, borrando: false, editorPestana: "escribir",
     fuente: null, cargado: false, sinConexion: false,
     partituras: {}, acceso: null, llave: "", // partituras privadas y quién puede verlas
+    visorFijo: false,
   };
   const app = document.getElementById("app");
 
@@ -79,6 +81,8 @@
   };
   let tamLetra = pref.leer("letra", 1.25);
   let presAcordes = pref.leer("pres-acordes", true);
+  let verComo = pref.leer("ver", "letra"); // letra | saxo | trompeta: qué se ve en cada alabanza
+  let zoomPart = pref.leer("zoom-part", 1);
   document.documentElement.style.setProperty("--letra", tamLetra + "rem");
 
   /* ---------- Utilidades ---------- */
@@ -112,10 +116,15 @@
   const duenoCorreo = String((window.CONFIG_FIREBASE || {}).dueno || "").toLowerCase();
   const esDueno = () => !!S.fuente && (S.fuente.modo === "local"
     || !!(S.fuente.cuenta && duenoCorreo && String(S.fuente.cuenta.correo || "").toLowerCase() === duenoCorreo));
+  const INSTRUMENTOS = [{ id: "saxo", boton: "Saxofonista", nombre: "saxofón" }, { id: "trompeta", boton: "Trompetista", nombre: "trompeta" }];
+  const instrumentosDe = (p) => (Array.isArray(p.instrumentos) && p.instrumentos.length ? p.instrumentos : ["saxo"]);
+  // Quien puede ver alguna partitura ve los botones de todos los instrumentos (la trompeta aún no tiene, quedan listos).
+  const conPartituras = () => Object.keys(S.partituras).length > 0;
+  const viendoPartitura = () => verComo !== "letra" && conPartituras() && INSTRUMENTOS.some((i) => i.id === verComo);
   // Partituras de esas alabanzas, en ese orden y sin repetir (un popurrí sirve para varias alabanzas).
   // Un popurrí va en la primera de sus alabanzas que no tenga partitura propia.
-  function gruposPartitura(titulos) {
-    const lista = Object.values(S.partituras), vistos = new Set(), grupos = [];
+  function gruposPartitura(titulos, instrumento) {
+    const lista = Object.values(S.partituras).filter((p) => !instrumento || instrumentosDe(p).includes(instrumento)), vistos = new Set(), grupos = [];
     const de = (t) => { const k = suave(t); return lista.filter((p) => p.pagina === 1 && (p.canciones || []).some((x) => suave(x) === k)); };
     const poner = (p) => { vistos.add(p.clave);
       grupos.push({ titulo: p.titulo, paginas: lista.filter((q) => q.clave === p.clave).sort((a, b) => a.pagina - b.pagina) }); };
@@ -127,21 +136,81 @@
     return grupos;
   }
   const imagenValida = (src) => /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(src || "");
-  function abrirVisor(titulo, grupos) {
-    cerrarVisor();
-    const v = document.createElement("div");
-    v.className = "visor"; v.id = "visor";
-    v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true"); v.setAttribute("aria-label", titulo);
-    v.innerHTML = `<header class="visor__cab"><b>${esc(titulo)}</b><button class="boton boton--icono" data-cerrar-visor aria-label="Cerrar">${ic("x")}</button></header>
-      <div class="visor__hojas">${grupos.map((g) => `<section>${grupos.length > 1 ? `<h2>${esc(g.titulo)}</h2>` : ""}
-        ${g.paginas.filter((p) => imagenValida(p.imagen)).map((p) => `<img src="${p.imagen}" alt="${esc(g.titulo)}, página ${p.pagina} de ${p.total}" loading="lazy">`).join("")}</section>`).join("")}</div>`;
-    v.addEventListener("click", (e) => { if (e.target.closest("[data-cerrar-visor]")) cerrarVisor(); });
-    document.body.appendChild(v); document.body.classList.add("sin-scroll");
-    v.querySelector("button").focus();
+  const hojasHTML = (grupos) => grupos.map((g) => `<section>${grupos.length > 1 ? `<h2>${esc(g.titulo)}</h2>` : ""}
+      ${g.paginas.filter((p) => imagenValida(p.imagen)).map((p) => `<img src="${p.imagen}" alt="${esc(g.titulo)}, página ${p.pagina} de ${p.total}" draggable="false">`).join("")}</section>`).join("");
+  const zoomHTML = () => `<span class="control"><button class="boton boton--chico boton--icono" data-zoom="-1" aria-label="Alejar">${ic("menos")}</button>
+      <b class="zoom-num">${Math.round(zoomPart * 100)}%</b><button class="boton boton--chico boton--icono" data-zoom="1" aria-label="Acercar">${ic("mas")}</button></span>`;
+  // Pantalla completa. Desde una alabanza (navegar) trae flechas para pasar a la anterior o la siguiente sin salir.
+  function abrirVisor(titulo, grupos, navegar) {
+    let v = document.getElementById("visor");
+    if (!v) {
+      v = document.createElement("div");
+      v.className = "visor"; v.id = "visor";
+      v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true");
+      v.addEventListener("click", clicVisor);
+      document.body.appendChild(v); document.body.classList.add("sin-scroll");
+    }
+    v.setAttribute("aria-label", titulo);
+    const ids = navegar ? listaContexto() : [], i = ids.indexOf(S.cancionId);
+    v.innerHTML = `<header class="visor__cab">
+        ${navegar ? `<button class="boton boton--icono" data-visor-mover="-1" ${i <= 0 ? "disabled" : ""} aria-label="Alabanza anterior">${ic("izq")}</button>` : ""}
+        <b>${esc(titulo)}</b>
+        ${navegar ? `<button class="boton boton--icono" data-visor-mover="1" ${i < 0 || i >= ids.length - 1 ? "disabled" : ""} aria-label="Alabanza siguiente">${ic("der")}</button>` : ""}
+        <span class="visor__herr">${zoomHTML()}
+          <button class="boton boton--icono" data-visor-girar aria-label="Girar">${ic("girar")}</button>
+          <button class="boton boton--icono" data-cerrar-visor aria-label="Cerrar">${ic("x")}</button></span></header>
+      <div class="visor__hojas partitura" style="--zoom:${zoomPart}">${grupos.length ? hojasHTML(grupos) : `<p class="visor__vacio">No hay partitura de ${esc(nombreInstr())} para esta alabanza.</p>`}</div>`;
+    activarPellizco(v.querySelector(".partitura"));
+    const foco = v.querySelector("[data-cerrar-visor]"); if (foco && !v.contains(document.activeElement)) foco.focus();
+  }
+  const instrRep = () => (verComo === "letra" ? "saxo" : verComo);
+  const nombreInstr = () => (INSTRUMENTOS.find((x) => x.id === verComo) || INSTRUMENTOS[0]).nombre;
+  function abrirVisorCancion() {
+    const c = S.canciones[S.cancionId]; if (!c) return;
+    abrirVisor(c.titulo, gruposPartitura([c.titulo], viendoPartitura() ? verComo : null), true);
+  }
+  async function clicVisor(e) {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.hasAttribute("data-cerrar-visor")) return cerrarVisor();
+    if (b.dataset.zoom) return cambiarZoom(+b.dataset.zoom);
+    if (b.dataset.visorMover) { S.visorFijo = true; mover(+b.dataset.visorMover); S.visorFijo = false; abrirVisorCancion(); return; }
+    if (b.hasAttribute("data-visor-girar")) {
+      const v = document.getElementById("visor");
+      // En Android se pone en pantalla completa y se gira de verdad; si el teléfono no deja (iPhone), se gira la hoja.
+      try {
+        if (!document.fullscreenElement) await v.requestFullscreen();
+        await screen.orientation.lock(screen.orientation.type.startsWith("portrait") ? "landscape" : "portrait");
+      } catch (_) { v.classList.toggle("visor--girado"); }
+    }
   }
   function cerrarVisor() {
     const v = document.getElementById("visor");
-    if (v) { v.remove(); document.body.classList.remove("sin-scroll"); }
+    if (!v) return;
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (_) {}
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    v.remove(); document.body.classList.remove("sin-scroll");
+  }
+  // Zoom de la partitura: botones + y −, o pellizcando con dos dedos. Se recuerda en el teléfono.
+  function cambiarZoom(paso, valor) {
+    zoomPart = Math.min(4, Math.max(1, +(valor !== undefined ? valor : zoomPart + paso * 0.25).toFixed(2)));
+    pref.guardar("zoom-part", zoomPart);
+    document.querySelectorAll(".partitura").forEach((el) => el.style.setProperty("--zoom", zoomPart));
+    document.querySelectorAll(".zoom-num").forEach((el) => { el.textContent = Math.round(zoomPart * 100) + "%"; });
+  }
+  function activarPellizco(el) {
+    if (!el) return;
+    let d0 = 0, z0 = 1;
+    const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    el.addEventListener("touchstart", (e) => { if (e.touches.length === 2) { d0 = dist(e.touches); z0 = zoomPart; } }, { passive: true });
+    el.addEventListener("touchmove", (e) => {
+      if (e.touches.length !== 2 || !d0) return;
+      e.preventDefault();
+      const antes = zoomPart, x = el.scrollLeft + el.clientWidth / 2, y = el.scrollTop + el.clientHeight / 2;
+      cambiarZoom(0, z0 * dist(e.touches) / d0);
+      const k = zoomPart / antes; // mantiene centrado lo que se estaba mirando
+      el.scrollLeft = x * k - el.clientWidth / 2; el.scrollTop = y * k - el.clientHeight / 2;
+    }, { passive: false });
+    el.addEventListener("touchend", () => { d0 = 0; });
   }
   // Las partituras llegan cifradas en importar/partituras.enc.json; la llave viene solo en el link que recibe el dueño
   // (#partituras=…), que nunca llega a un servidor. Al subirlas quedan en Firestore, protegidas por las reglas.
@@ -557,7 +626,7 @@
               : editable ? `<button class="cancion" data-registrar="${i}"><b>${esc(tituloItem(it))}</b><span>${esc(sub)}</span></button>`
               : `<span class="cancion"><b>${esc(tituloItem(it))}</b><span>${esc(sub)}</span></span>`}</li>`;
     }).join("");
-    const txt = mensajeWhatsApp(r.id), partituras = gruposPartitura(cancionesDe(r.id).map(tituloItem));
+    const txt = mensajeWhatsApp(r.id), partituras = gruposPartitura(cancionesDe(r.id).map(tituloItem), instrRep());
     return `<div class="envoltura pagina">${avisos()}
       <div class="fila"><button class="boton boton--plano" data-accion="reps">${ic("izq")} Repertorios</button></div>
       <div class="fila fila--entre"><div class="seccion-titulo"><h1>${esc(r.nombre)}</h1><p>${r.fecha ? fechaLarga(r.fecha) + " · " : ""}${cuantas(total)}</p></div>
@@ -646,7 +715,7 @@
     const c = S.canciones[S.cancionId];
     if (!c) { S.vista = S.volverA; return render(); }
     const tonoFinal = A.tonoTranspuesto(c, S.transponer), ids = listaContexto();
-    const enRep = !!rep(S.contexto);
+    const enRep = !!rep(S.contexto), part = viendoPartitura();
     const bpm = metro.bpm || +c.bpm || 0;
     return `<div class="envoltura pagina">
       <div class="fila"><button class="boton boton--plano" data-accion="volver">${ic("izq")} ${S.volverA === "repertorio" ? "Repertorio" : S.volverA === "inicio" ? "Inicio" : "Cancionero"}</button></div>
@@ -658,6 +727,12 @@
         </aside>
         <div style="display:grid;gap:16px;min-width:0">
           <div class="barra-herr">
+            ${conPartituras() ? `<div class="segmentos segmentos--ver" role="group" aria-label="Qué ver">
+              <button data-ver="letra" aria-pressed="${!part}">Letra</button>
+              ${INSTRUMENTOS.map((x) => `<button data-ver="${x.id}" aria-pressed="${part && verComo === x.id}">${x.boton}</button>`).join("")}
+            </div>` : ""}
+            ${part ? `<div class="fila" style="gap:12px">${zoomHTML()}
+              <button class="boton boton--chico" data-accion="partitura">${ic("pantalla")} Pantalla completa</button></div>` : `
             <div class="segmentos" role="group" aria-label="Modo">
               <button data-modo-btn="presentacion" aria-pressed="false">Modo presentación</button>
               <button data-modo-btn="practica" aria-pressed="true">Modo práctica</button>
@@ -675,18 +750,24 @@
               <span class="control"><span>Letra</span>
                 <button class="boton boton--chico boton--icono" data-accion="letra-menos" aria-label="Letra más pequeña">${ic("menos")}</button>
                 <button class="boton boton--chico boton--icono" data-accion="letra-mas" aria-label="Letra más grande">${ic("mas")}</button></span>
-            </div>
+            </div>`}
           </div>
-          <article class="hoja">
+          ${part ? `<article class="hoja hoja--partitura">
+            <header class="hoja__cab"><div><h1>${esc(c.titulo)}</h1><p>Partitura de ${esc(nombreInstr())}</p></div>
+              ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}</header>
+            ${gruposPartitura([c.titulo], verComo).length
+              ? `<div class="partitura" id="partitura" style="--zoom:${zoomPart}">${hojasHTML(gruposPartitura([c.titulo], verComo))}</div>
+                 <p class="ayuda">Acerca con dos dedos o con + y −. Gira el teléfono para verla en horizontal.</p>`
+              : `<p class="ayuda">Todavía no hay partitura de ${esc(nombreInstr())} para esta alabanza. <button class="enlace" data-ver="letra">Ver la letra</button></p>`}
+          </article>` : `<article class="hoja">
             <header class="hoja__cab"><div><h1>${esc(c.titulo)}</h1>${detalle(c) ? `<p>${esc(detalle(c))}</p>` : ""}</div>
               <div class="fila">${tonoFinal ? `<span class="hoja__tono">Tono: <b>${esc(tonoFinal)}</b></span>` : ""}
                 ${!enFijo(c) ? `<button class="boton boton--chico" data-accion="tono-original">Volver a ${esc(tonoActual(c))}</button>` : ""}
                 ${puede("editar") && !enFijo(c) ? `<button class="boton boton--chico boton--principal" data-accion="tono-fijar">${ic("check")} Fijar en ${esc(tonoFinal)}</button>` : ""}
                 ${fijoDe(c) && enFijo(c) ? `<span class="ayuda">Fijado · original ${esc(A.tonoDe(c))}${puede("editar") ? ` · <button class="enlace" data-accion="tono-quitar-fijo">usar el original</button>` : ""}</span>` : ""}
-                ${gruposPartitura([c.titulo]).length ? `<button class="boton boton--chico" data-accion="partitura">${ic("nota")} Partitura</button>` : ""}
                 ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}</div></header>
             <div class="letra">${letraHTML(c.letra, S.transponer, tonoFinal) || '<p class="ayuda">Esta alabanza todavía no tiene letra.</p>'}</div>
-          </article>
+          </article>`}
           ${puede("editar") ? (S.borrando
             ? `<div class="confirmar"><p>¿Borrar “${esc(c.titulo)}” del cancionero? También se quitará de los repertorios. No se puede deshacer.</p>
                <div class="fila"><button class="boton boton--principal" data-accion="borrar-si">${ic("basura")} Sí, borrar</button><button class="boton" data-accion="borrar-no">Cancelar</button></div></div>`
@@ -799,6 +880,7 @@
     if (S.vista === "editar") actualizarVistaPrevia();
     if (S.vista === "rep-editar") resumenLista();
     if (S.vista === "repertorio" && S.ordenando) activarArrastre();
+    activarPellizco(document.getElementById("partitura"));
     if (S.vista === "cancion" && S.modo === "presentacion") pintarPresentacion();
     if (foco) { const el = document.getElementById(foco); if (el && el.tagName === "INPUT") { el.focus(); try { el.setSelectionRange(cursor, cursor); } catch (_) {} } }
   }
@@ -816,7 +898,7 @@
   }
   function irA(vista) {
     if (vista !== "cancion") { cerrarPresentacion(); metro.parar(); }
-    cerrarVisor();
+    if (!S.visorFijo) cerrarVisor();
     S.vista = vista; S.borrando = false; app.innerHTML = ""; render(); window.scrollTo(0, 0);
     const sec = SECCION[vista];
     if (sec && location.hash !== "#" + sec) { try { history.replaceState(null, "", "#" + sec); } catch (_) {} }
@@ -1077,6 +1159,8 @@
       return;
     }
     if (d.abrir) return abrirCancion(d.abrir, d.contexto, d.modo);
+    if (d.ver) { verComo = d.ver; pref.guardar("ver", verComo); return render(); }
+    if (d.zoom) return cambiarZoom(+d.zoom);
     if (d.agregar) return cambiarItems([...items, { titulo: S.canciones[d.agregar].titulo, tono: "", id: d.agregar }]);
     if (d.sacar) return cambiarItems(items.filter((it) => enlazada(it) !== d.sacar));
     if (d.agregarNombre) { S.buscar = ""; return cambiarItems([...items, { titulo: d.agregarNombre, tono: "" }]); }
@@ -1134,8 +1218,8 @@
         return;
       }
       case "pdf": return descargarPDF(S.rep);
-      case "partituras-rep": return abrirVisor("Partituras · " + rep(S.rep).nombre, gruposPartitura(cancionesDe(S.rep).map(tituloItem)));
-      case "partitura": return abrirVisor(c.titulo, gruposPartitura([c.titulo]));
+      case "partituras-rep": return abrirVisor("Partituras · " + rep(S.rep).nombre, gruposPartitura(cancionesDe(S.rep).map(tituloItem), instrRep()));
+      case "partitura": return abrirVisorCancion();
       case "subir-partituras": return subirPartituras();
       case "importar": return importarPendientes();
       case "poner-links": return ponerLinks();
