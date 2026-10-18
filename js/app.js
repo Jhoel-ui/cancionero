@@ -369,6 +369,23 @@
     render(); if (n) avisar(`${n} alabanzas agregadas.`);
   }
 
+  // Links de referencia: si una alabanza ya cargada no tiene link y el archivo sí lo trae, se le pone.
+  function linksPendientes() {
+    pendientesImportar();
+    const porClave = new Map((paraImportar || []).filter((c) => c.link).map((c) => [clave(c.titulo), c.link]));
+    return todas().filter((c) => !c.link && porClave.has(clave(c.titulo))).map((c) => ({ c, link: porClave.get(clave(c.titulo)) }));
+  }
+  async function ponerLinks() {
+    const lista = linksPendientes();
+    if (!lista.length || !confirm(`¿Poner el link de la versión a ${lista.length} alabanzas?\n\n${lista.map((x) => "• " + x.c.titulo).join("\n")}`)) return;
+    let n = 0;
+    for (const { c, link } of lista) {
+      const { id, privada, ...datos } = c;
+      try { await guardarCancion(id, { ...datos, link, actualizado: Date.now() }, !!privada); n++; } catch (err) { errorGuardar(err); break; }
+    }
+    render(); if (n) avisar(`Links puestos en ${n} alabanzas.`);
+  }
+
   /* importar/repertorios.json: [{ nombre, fecha, lista }] con la lista escrita como en WhatsApp.
      Se agrega si no hay otro con el mismo nombre y fecha; si en esa fecha hay uno vacío, se llena ese. */
   let repsImportar = null;
@@ -402,6 +419,7 @@
       <div class="fila fila--entre">
         <div class="seccion-titulo"><h1>Cancionero</h1><p>Busca, practica y adora.</p></div>
         <div class="fila">${(() => { const n = pendientesImportar().length; return n ? `<button class="boton" data-accion="importar">${ic("bajar")} Importar ${n} ${n === 1 ? "alabanza" : "alabanzas"}</button>` : ""; })()}
+        ${(() => { const n = puede("borrar") ? linksPendientes().length : 0; return n ? `<button class="boton" data-accion="poner-links">${ic("play")} Poner ${n} ${n === 1 ? "link" : "links"}</button>` : ""; })()}
         ${puede("editar") ? `<button class="boton boton--principal" data-accion="nueva">${ic("mas")} Nueva alabanza</button>` : ""}</div>
       </div>
       <label class="buscador">${ic("buscar")}<input class="campo" id="buscar-lista" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar canción, autor, tono o una frase" value="${esc(S.buscar)}" aria-label="Buscar canción"></label>
@@ -965,6 +983,7 @@
       }
       case "pdf": return descargarPDF(S.rep);
       case "importar": return importarPendientes();
+      case "poner-links": return ponerLinks();
       case "importar-reps": return importarRepertorios();
       case "nueva": S.prefill = null; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
       case "editar": S.editorPestana = "escribir"; return irA("editar");
