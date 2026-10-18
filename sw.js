@@ -1,5 +1,5 @@
 // Guarda la página en el teléfono para que abra sin señal.
-const CACHE = "cancionero-v3";
+const CACHE = "cancionero-v4";
 const ARCHIVOS = ["./", "index.html", "css/app.css", "js/config.js", "js/acordes.js", "js/datos.js", "js/app.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
 
@@ -14,7 +14,8 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.hostname.endsWith("googleapis.com") && url.pathname.includes("/google.firestore")) return;
   e.respondWith(
-    fetch(e.request).then((r) => {
+    // Los archivos de la página se revalidan siempre, para que un cambio se vea al recargar.
+    fetch(url.origin === location.origin ? new Request(e.request, { cache: "no-cache" }) : e.request).then((r) => {
       if (r.ok && (url.origin === location.origin || url.hostname.includes("gstatic") || url.hostname.includes("cdnjs") || url.hostname.includes("fonts"))) {
         const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia));
       }
