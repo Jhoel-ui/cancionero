@@ -28,6 +28,8 @@
     varita: '<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/>',
     check: '<path d="M20 6 9 17l-5-5"/>', info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
     pantalla: '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+    asa: '<circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>',
+    orden: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
     metronomo: '<path d="M12 11.5 18 4"/><path d="M8.5 3h7l4 18H4.5Z"/><path d="M7 15h10"/>',
     candado: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   };
@@ -61,7 +63,7 @@
     vista: "inicio",       // inicio | cancionero | repertorio | rep-editar | elegir | cancion | editar
     canciones: {}, repertorios: {},
     publicas: {}, privadas: {}, // "canciones" (las ve cualquiera) y "canciones_equipo" (solo el equipo)
-    rep: null, prefill: null,
+    rep: null, prefill: null, ordenando: false, arrastrando: false, catElegir: "",
     categoria: "", orden: "az", buscar: "",
     cancionId: null, contexto: "cancionero", volverA: "cancionero",
     transponer: 0, modo: "practica",
@@ -470,7 +472,17 @@
     const editable = puede("editar"), items = r.items || [], primera = idsDe(r.id)[0];
     const total = cancionesDe(r.id).length;
     let n = 0;
-    const filas = items.map((it, i) => {
+    const ord = editable && S.ordenando;
+    const filas = ord ? items.map((it, i) => {
+      // Modo ordenar: se arrastra desde ≡; se cambia el tono del día o se quita.
+      const quitar = `<button class="boton boton--plano boton--chico boton--icono" data-quitar="${i}" aria-label="Quitar">${ic("x")}</button>`;
+      if (!esCancion(it)) return `<li class="rep-bloque rep-ord" data-i="${i}"><span class="asa" aria-label="Arrastrar">${ic("asa")}</span>
+          <button class="rep-bloque__linea" data-renombrar="${i}">${it.bloque ? `<b>${esc(it.bloque)}</b>` : `<b class="tenue">Separador · ponle nombre</b>`}</button>${quitar}</li>`;
+      const t = tonoItem(it);
+      return `<li class="rep-ord${it.alt ? " rep-alt" : ""}" data-i="${i}"><span class="asa" aria-label="Arrastrar">${ic("asa")}</span>
+          <span class="cancion"><b>${it.alt ? "ó " : ""}${esc(tituloItem(it))}</b></span>
+          <button class="tono-chip" data-tono="${i}" aria-label="Tono para este día">${esc(t) || "Tono"}</button>${quitar}</li>`;
+    }).join("") : items.map((it, i) => {
       if (!esCancion(it)) return `<li class="rep-bloque"><span class="rep-bloque__linea">${it.bloque ? `<b>${esc(it.bloque)}</b>` : ""}</span></li>`;
       const id = enlazada(it), c = id && S.canciones[id], t = tonoItem(it);
       if (!it.alt) n++;
@@ -484,18 +496,23 @@
     return `<div class="envoltura pagina">${avisos()}
       <div class="fila"><button class="boton boton--plano" data-accion="reps">${ic("izq")} Repertorios</button></div>
       <div class="fila fila--entre"><div class="seccion-titulo"><h1>${esc(r.nombre)}</h1><p>${r.fecha ? fechaLarga(r.fecha) + " · " : ""}${cuantas(total)}</p></div>
-        ${editable ? `<div class="fila"><button class="boton" data-accion="rep-editar">${ic("lapiz")} Editar lista</button>
-          <button class="boton" data-accion="elegir">${ic("mas")} Del cancionero</button></div>` : ""}</div>
+        ${editable ? (ord
+          ? `<div class="fila"><button class="boton" data-accion="separador">${ic("menos")} Separador</button>
+              <button class="boton boton--principal" data-accion="ordenar-listo">${ic("check")} Listo</button></div>`
+          : `<div class="fila"><button class="boton boton--principal" data-accion="elegir">${ic("mas")} Agregar alabanzas</button>
+              ${items.length > 1 ? `<button class="boton" data-accion="ordenar">${ic("orden")} Ordenar</button>` : ""}
+              <button class="boton boton--plano" data-accion="rep-editar">${ic("lapiz")} Nombre y fecha</button></div>`) : ""}</div>
       ${items.length ? `<div class="repertorio"><div style="display:grid;gap:14px;min-width:0">
-        ${editable && cancionesDe(r.id).some((it) => !enlazada(it)) ? `<p class="ayuda">Toca una alabanza “Sin letra” para registrarla en el cancionero; quedará enlazada aquí.</p>` : ""}
-        <ol class="lista-rep lista-rep--rep">${filas}</ol>
+        ${ord ? `<p class="ayuda">Mantén presionado ${ic("asa")} y arrastra para mover. Toca el tono para cambiarlo solo en este repertorio.</p>`
+          : editable && cancionesDe(r.id).some((it) => !enlazada(it)) ? `<p class="ayuda">Toca una alabanza “Sin letra” para registrarla en el cancionero; quedará enlazada aquí.</p>` : ""}
+        <ol class="lista-rep lista-rep--rep${ord ? " lista-rep--ord" : ""}" id="lista-rep">${filas}</ol>
         <div class="fila">${primera ? `<button class="boton boton--principal" data-abrir="${primera}" data-contexto="${r.id}" data-modo="presentacion">${ic("pantalla")} Presentar en vivo</button>` : ""}
           <button class="boton" data-accion="pdf">${ic("bajar")} Descargar PDF</button></div>
       </div>
       <aside class="panel"><h2>Enviar al grupo de WhatsApp</h2><pre class="mensaje" id="mensaje">${esc(txt)}</pre>
         <div class="fila"><button class="boton boton--principal" data-accion="copiar">${ic("copiar")} Copiar</button>
         <a class="boton" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic("mensaje")} Abrir WhatsApp</a></div></aside>
-      </div>` : `<div class="vacio"><b>Este repertorio está vacío</b>${editable ? `<button class="boton boton--principal" data-accion="rep-editar">${ic("lapiz")} Escribir la lista</button>` : ""}</div>`}
+      </div>` : `<div class="vacio"><b>Este repertorio está vacío</b>${editable ? `<p>Toca las alabanzas que van; después las ordenas.</p><button class="boton boton--principal" data-accion="elegir">${ic("mas")} Agregar alabanzas</button>` : ""}</div>`}
     </div>`;
   }
 
@@ -510,10 +527,13 @@
           <label class="etiqueta">Fecha<input class="campo" name="fecha" type="date" required value="${esc(r.fecha)}"></label>
         </div>
         <datalist id="nombres-rep">${["Oficial vigilia", "Ensayo viernes", "Ensayo miércoles", "Confraternidad", "Domingo", "Sábado"].map((x) => `<option value="${x}">`).join("")}</datalist>
-        <label class="etiqueta">Lista<textarea class="campo campo--lista" name="lista" rows="18" spellcheck="false" placeholder="- Santo por siempre - G\n----------\n- Gracia sublime - A\n- Danzando - Bm\n---------- *2da Parte*\n- Jehová Jireh - G">${esc(escribirLista(r.items || []))}</textarea></label>
-        <p class="ayuda">Puedes pegar la lista tal como la mandas por WhatsApp. Una alabanza por línea con su tono: <b>- Danzando - Bm</b>. Separa las partes con <b>-----</b> y, si quieres, ponle nombre: <b>----- 2da Parte</b>. Escribe <b>Ó</b> en una línea para marcar la siguiente como alternativa.</p>
-        <p class="ayuda" id="rep-resumen" aria-live="polite"></p>
-        <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} Guardar repertorio</button>
+        ${S.rep ? "" : `<p class="ayuda">Después de guardar eliges las alabanzas tocándolas.</p>`}
+        <details class="pegar"><summary>${S.rep ? "Editar como texto" : "¿Ya tienes la lista escrita en WhatsApp? Pégala aquí"}</summary>
+          <label class="etiqueta">Lista<textarea class="campo campo--lista" name="lista" rows="16" spellcheck="false" placeholder="- Santo por siempre - G\n----------\n- Gracia sublime - A\n- Danzando - Bm\n---------- *2da Parte*\n- Jehová Jireh - G">${esc(escribirLista(r.items || []))}</textarea></label>
+          <p class="ayuda">Una alabanza por línea con su tono: <b>- Danzando - Bm</b>. Separa las partes con <b>-----</b> y, si quieres, ponle nombre: <b>----- 2da Parte</b>. Escribe <b>Ó</b> en una línea para marcar la siguiente como alternativa.</p>
+          <p class="ayuda" id="rep-resumen" aria-live="polite"></p>
+        </details>
+        <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} ${S.rep ? "Guardar" : "Crear y elegir alabanzas"}</button>
           ${S.rep && puede("borrar") ? `<button class="boton boton--plano boton--peligro" type="button" data-accion="rep-borrar">${ic("basura")} Borrar repertorio</button>` : ""}</div>
       </form>
     </div>`;
@@ -528,20 +548,26 @@
   function vistaElegir() {
     const r = rep(S.rep);
     if (!r) return vistaRepertorios();
-    const ids = idsDe(r.id), lista = filtradas();
+    const ids = idsDe(r.id), q = normal(S.buscar);
+    const lista = todas().filter((c) => (!S.catElegir || c.categoria === S.catElegir) && coincide(c, q))
+      .sort((a, b) => normal(a.titulo).localeCompare(normal(b.titulo)));
+    const cats = CATEGORIAS.filter((c) => todas().some((x) => x.categoria === c.id));
+    const exacta = S.buscar.trim() && todas().some((c) => clave(c.titulo) === clave(S.buscar));
     return `<div class="envoltura pagina" style="max-width:48rem">
-      <div class="fila fila--entre"><div class="seccion-titulo"><h1>Agregar a ${esc(r.nombre)}</h1><p>${r.fecha ? fechaLarga(r.fecha) + " · " : ""}${ids.length} del cancionero</p></div>
-        <button class="boton boton--principal" data-accion="listo">${ic("check")} Listo</button></div>
+      <div class="seccion-titulo"><h1>Agregar a ${esc(r.nombre)}</h1><p>Toca las alabanzas que van. Se agregan al final; después las ordenas.</p></div>
       <label class="buscador">${ic("buscar")}<input class="campo" id="buscar-elegir" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar canción" value="${esc(S.buscar)}" aria-label="Buscar canción"></label>
-      ${lista.length ? `<ul class="lista-rep">${lista.map((c) => {
+      ${cats.length ? `<div class="chips chips--desliza"><button class="chip" data-cat-elegir="" aria-pressed="${!S.catElegir}">Todas</button>${cats.map((c) => `<button class="chip" data-cat-elegir="${esc(c.id)}" aria-pressed="${S.catElegir === c.id}">${esc(c.id)}</button>`).join("")}</div>` : ""}
+      ${S.buscar.trim() && !exacta ? `<button class="boton" data-agregar-nombre="${esc(S.buscar.trim())}">${ic("mas")} Agregar “${esc(S.buscar.trim())}” sin letra</button>` : ""}
+      ${lista.length ? `<ul class="lista-rep lista-elegir">${lista.map((c) => {
         const pos = ids.indexOf(c.id), t = tonoActual(c);
-        return `<li><span class="orden">${pos >= 0 ? pos + 1 : ""}</span>
+        return `<li><button class="elegir${pos >= 0 ? " elegida" : ""}" ${pos >= 0 ? `data-sacar="${c.id}"` : `data-agregar="${c.id}"`} aria-pressed="${pos >= 0}">
+          <span class="orden">${pos >= 0 ? pos + 1 : ""}</span>
           <span class="cancion"><b>${esc(c.titulo)}</b><span>${esc([t && "Tono " + t, c.categoria].filter(Boolean).join(" · ")) || "&nbsp;"}</span></span>
-          ${pos >= 0 ? `<button class="boton boton--chico" data-sacar="${c.id}">${ic("check")} Agregada</button>`
-                     : `<button class="boton boton--chico boton--principal" data-agregar="${c.id}">${ic("mas")} Agregar</button>`}</li>`;
+          <span class="marca">${ic(pos >= 0 ? "check" : "mas")}</span></button></li>`;
       }).join("")}</ul>`
-      : `<div class="vacio"><b>${todas().length ? "Ninguna alabanza coincide" : "Todavía no hay alabanzas registradas"}</b>
-          <button class="boton boton--principal" data-accion="nueva">${ic("mas")} Registrar alabanza</button></div>`}
+      : `<div class="vacio"><b>${todas().length ? "Ninguna alabanza coincide" : "Todavía no hay alabanzas registradas"}</b></div>`}
+      <div class="barra-elegir"><span><b>${cuantas(cancionesDe(r.id).length)}</b> en el repertorio</span>
+        <button class="boton boton--principal" data-accion="listo">${ic("check")} Listo</button></div>
     </div>`;
   }
 
@@ -661,6 +687,23 @@
     </div>`;
   }
 
+  /* ---------- Ordenar arrastrando (SortableJS) ---------- */
+  function activarArrastre() {
+    const el = document.getElementById("lista-rep");
+    if (!el || !window.Sortable) return;
+    window.Sortable.create(el, {
+      handle: ".asa", animation: 160, delay: 0, ghostClass: "arrastrando-fantasma", chosenClass: "arrastrando-elegida",
+      onStart: () => { S.arrastrando = true; },
+      onEnd: (ev) => {
+        S.arrastrando = false;
+        const items = ((rep(S.rep) || {}).items || []).slice();
+        if (ev.oldIndex === ev.newIndex) return render();
+        const [it] = items.splice(ev.oldIndex, 1); items.splice(ev.newIndex, 0, it);
+        cambiarItems(items);
+      },
+    });
+  }
+
   /* ---------- Render ---------- */
   const SECCION = { inicio: "inicio", cancionero: "cancionero", repertorio: "repertorio", "rep-editar": "repertorio", elegir: "repertorio", editar: "cancionero" };
   function render() {
@@ -673,6 +716,7 @@
     pintarCuenta();
     if (S.vista === "editar" && document.getElementById("form-cancion")) return;
     if (S.vista === "rep-editar" && document.getElementById("form-rep")) return;
+    if (S.arrastrando) return;
     if (S.vista === "equipo" && document.getElementById("form-equipo") && document.activeElement && document.activeElement.form) return;
     const foco = document.activeElement && document.activeElement.id;
     const cursor = foco && document.activeElement.selectionStart;
@@ -682,6 +726,7 @@
     document.body.classList.toggle("con-pasador", !!pas);
     if (S.vista === "editar") actualizarVistaPrevia();
     if (S.vista === "rep-editar") resumenLista();
+    if (S.vista === "repertorio" && S.ordenando) activarArrastre();
     if (S.vista === "cancion" && S.modo === "presentacion") pintarPresentacion();
     if (foco) { const el = document.getElementById(foco); if (el && el.tagName === "INPUT") { el.focus(); try { el.setSelectionRange(cursor, cursor); } catch (_) {} } }
   }
@@ -903,10 +948,15 @@
       return;
     }
     if (e.target.id === "form-rep") {
-      const f = e.target, l = leerLista(f.lista.value);
+      const f = e.target, l = leerLista(f.lista.value), nuevo = !S.rep;
+      if (S.rep && f.lista.value === f.lista.defaultValue) l.items = rep(S.rep).items;
       const nombre = f.nombre.value.trim() || l.nombre || (f.fecha.value ? nombreDia(f.fecha.value) : "Repertorio");
       if (!f.fecha.value) { f.fecha.focus(); return avisar("Elige la fecha del repertorio.", true); }
-      try { S.rep = await guardarRepertorio(S.rep, { nombre, fecha: f.fecha.value, items: l.items }); irA("repertorio"); avisar("Repertorio guardado."); }
+      try {
+        S.rep = await guardarRepertorio(S.rep, { nombre, fecha: f.fecha.value, items: l.items });
+        if (nuevo && !l.items.length) { S.buscar = ""; S.catElegir = ""; return irA("elegir"); }
+        irA("repertorio"); avisar("Repertorio guardado.");
+      }
       catch (err) { errorGuardar(err); }
       return;
     }
@@ -934,7 +984,7 @@
     const d = b.dataset;
     const items = ((rep(S.rep) || {}).items || []).slice();
 
-    if (d.rep) { S.rep = d.rep; return irA("repertorio"); }
+    if (d.rep) { S.rep = d.rep; S.ordenando = false; return irA("repertorio"); }
     if (d.cat !== undefined) { S.categoria = d.cat; if (S.vista !== "cancionero") return irA("cancionero"); return render(); }
     if (d.modoBtn) { if (d.modoBtn === "presentacion") { S.modo = "presentacion"; pintarPresentacion(); } return; }
     if (d.pestana) {
@@ -949,6 +999,21 @@
     if (d.abrir) return abrirCancion(d.abrir, d.contexto, d.modo);
     if (d.agregar) return cambiarItems([...items, { titulo: S.canciones[d.agregar].titulo, tono: "", id: d.agregar }]);
     if (d.sacar) return cambiarItems(items.filter((it) => enlazada(it) !== d.sacar));
+    if (d.agregarNombre) { S.buscar = ""; return cambiarItems([...items, { titulo: d.agregarNombre, tono: "" }]); }
+    if (d.catElegir !== undefined) { S.catElegir = d.catElegir; return render(); }
+    if (d.quitar !== undefined) { items.splice(+d.quitar, 1); return cambiarItems(items); }
+    if (d.renombrar !== undefined) {
+      const it = items[+d.renombrar], t = prompt("Nombre de esta parte (por ejemplo: 2da Parte, Ofrendas). Déjalo vacío para una línea simple.", it.bloque || "");
+      if (t === null) return;
+      items[+d.renombrar] = { bloque: t.trim() }; return cambiarItems(items);
+    }
+    if (d.tono !== undefined) {
+      const it = items[+d.tono], t = prompt(`Tono de “${tituloItem(it)}” para este repertorio. Déjalo vacío para usar el de la alabanza.`, it.tono || tonoItem(it));
+      if (t === null) return;
+      const ac = t.trim() ? A.normalizarAcorde(t.trim().replace(/\s+/g, "")) : "";
+      if (ac === null) return avisar("No reconocí ese tono. Escríbelo como G, Ab, C#m o sol+.", true);
+      items[+d.tono] = Object.assign({}, it, { tono: ac }); return cambiarItems(items);
+    }
     if (d.registrar !== undefined) {
       const it = items[+d.registrar];
       S.prefill = { titulo: it.titulo, tono: it.tono }; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = "repertorio"; S.contexto = S.rep;
@@ -958,7 +1023,14 @@
     const c = S.canciones[S.cancionId];
     switch (d.accion) {
       case "reps": S.rep = null; return irA("repertorio");
-      case "rep-nuevo": S.rep = null; return irA("rep-editar");
+      case "rep-nuevo": S.rep = null; S.ordenando = false; return irA("rep-editar");
+      case "ordenar": S.ordenando = true; return render();
+      case "ordenar-listo": S.ordenando = false; return render();
+      case "separador": {
+        const t = prompt("Nombre de esta parte (por ejemplo: 2da Parte, Ofrendas). Déjalo vacío para una línea simple.", "");
+        if (t === null) return;
+        return cambiarItems([...items, { bloque: t.trim() }]);
+      }
       case "rep-editar": return irA("rep-editar");
       case "rep-cancelar": return irA("repertorio");
       case "rep-borrar": {
@@ -968,7 +1040,7 @@
         catch (err) { errorGuardar(err); }
         return;
       }
-      case "elegir": S.buscar = ""; S.categoria = ""; return irA("elegir");
+      case "elegir": S.buscar = ""; S.catElegir = ""; S.ordenando = false; return irA("elegir");
       case "listo": S.buscar = ""; return irA("repertorio");
       case "limpiar": S.buscar = ""; S.categoria = ""; return render();
       case "copiar": {
