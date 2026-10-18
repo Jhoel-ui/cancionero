@@ -117,7 +117,7 @@
   const enlazada = (it) => (!esCancion(it) ? null : it.id && S.canciones[it.id] ? it.id : buscarPorTitulo(it.titulo));
   const rep = (rid) => (rid ? S.repertorios[rid] : null);
   const tituloItem = (it) => it.titulo || (S.canciones[enlazada(it)] || {}).titulo || "";
-  const tonoItem = (it) => it.tono || (enlazada(it) ? A.tonoDe(S.canciones[enlazada(it)]) : "");
+  const tonoItem = (it) => it.tono || (enlazada(it) ? tonoActual(S.canciones[enlazada(it)]) : "");
   const cancionesDe = (rid) => ((rep(rid) || {}).items || []).filter(esCancion);
   const idsDe = (rid) => [...new Set(cancionesDe(rid).map(enlazada).filter(Boolean))];
   const cuantas = (n) => (n ? n + (n === 1 ? " alabanza" : " alabanzas") : "sin alabanzas");
@@ -175,12 +175,12 @@
   }
   // Medios tonos para llevar la alabanza al tono que se puso en el repertorio
   function pasosPara(id, rid) {
-    const r = rep(rid); if (!r || !S.canciones[id]) return 0;
+    const r = rep(rid); if (!r || !S.canciones[id]) return fijoDe(S.canciones[id]);
     const it = r.items.find((x) => x.tono && enlazada(x) === id);
-    return it ? A.pasosEntre(A.tonoDe(S.canciones[id]), it.tono) : 0;
+    return it ? A.pasosEntre(A.tonoDe(S.canciones[id]), it.tono) : fijoDe(S.canciones[id]);
   }
   const puede = (p) => S.cargado && S.fuente && S.fuente.permisos && S.fuente.permisos[p];
-  const coincide = (c, q) => !q || normal(`${c.titulo} ${c.autor || ""} ${A.tonoDe(c)} ${(c.letra || "").replace(/\[[^\]]*\]/g, "")}`).includes(q);
+  const coincide = (c, q) => !q || normal(`${c.titulo} ${c.autor || ""} ${A.tonoDe(c)} ${tonoActual(c)} ${(c.letra || "").replace(/\[[^\]]*\]/g, "")}`).includes(q);
   const todas = () => Object.entries(S.canciones).map(([id, c]) => ({ id, ...c }));
   function filtradas() {
     const q = normal(S.buscar);
@@ -190,6 +190,11 @@
       : l.sort((a, b) => normal(a.titulo).localeCompare(normal(b.titulo)));
   }
   const detalle = (c) => [c.privada && "Solo equipo", c.categoria, c.autor].filter(Boolean).join(" · ");
+  // Tono fijado: el líder decide tocarla en otro tono desde ahora (p. ej. G → Ab). La letra se guarda como
+  // se escribió y "fijo" dice cuántos medios tonos subirla o bajarla en todas partes.
+  const fijoDe = (c) => (c && Number.isInteger(c.fijo) ? c.fijo : 0);
+  const tonoActual = (c) => A.tonoTranspuesto(c, fijoDe(c));
+  const enFijo = (c) => ((S.transponer - fijoDe(c)) % 12 + 12) % 12 === 0;
   // Las alabanzas "solo equipo" (de otros artistas) viven en otra colección que solo leen los miembros.
   const coleccionDe = (privada) => (privada ? "canciones_equipo" : "canciones");
   function unirCanciones() {
@@ -331,7 +336,7 @@
   }
 
   function filaCancion(c, contexto) {
-    const t = A.tonoDe(c);
+    const t = tonoActual(c);
     return `<li><button class="fila-cancion" data-abrir="${c.id}" data-contexto="${contexto}">
       <span class="fila-cancion__icono">${ic((CATEGORIAS.find((x) => x.id === c.categoria) || {}).icono || "nota")}</span>
       <span class="fila-cancion__texto"><b>${esc(c.titulo)}</b><span>${esc(detalle(c)) || "Sin categoría"}</span></span>
@@ -511,7 +516,7 @@
         <button class="boton boton--principal" data-accion="listo">${ic("check")} Listo</button></div>
       <label class="buscador">${ic("buscar")}<input class="campo" id="buscar-elegir" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar canción" value="${esc(S.buscar)}" aria-label="Buscar canción"></label>
       ${lista.length ? `<ul class="lista-rep">${lista.map((c) => {
-        const pos = ids.indexOf(c.id), t = A.tonoDe(c);
+        const pos = ids.indexOf(c.id), t = tonoActual(c);
         return `<li><span class="orden">${pos >= 0 ? pos + 1 : ""}</span>
           <span class="cancion"><b>${esc(c.titulo)}</b><span>${esc([t && "Tono " + t, c.categoria].filter(Boolean).join(" · ")) || "&nbsp;"}</span></span>
           ${pos >= 0 ? `<button class="boton boton--chico" data-sacar="${c.id}">${ic("check")} Agregada</button>`
@@ -565,7 +570,9 @@
           <article class="hoja">
             <header class="hoja__cab"><div><h1>${esc(c.titulo)}</h1>${detalle(c) ? `<p>${esc(detalle(c))}</p>` : ""}</div>
               <div class="fila">${tonoFinal ? `<span class="hoja__tono">Tono: <b>${esc(tonoFinal)}</b></span>` : ""}
-                ${S.transponer ? `<button class="boton boton--chico" data-accion="tono-original">Volver a ${esc(A.tonoDe(c))}</button>` : ""}
+                ${!enFijo(c) ? `<button class="boton boton--chico" data-accion="tono-original">Volver a ${esc(tonoActual(c))}</button>` : ""}
+                ${puede("editar") && !enFijo(c) ? `<button class="boton boton--chico boton--principal" data-accion="tono-fijar">${ic("check")} Fijar en ${esc(tonoFinal)}</button>` : ""}
+                ${fijoDe(c) && enFijo(c) ? `<span class="ayuda">Fijado · original ${esc(A.tonoDe(c))}${puede("editar") ? ` · <button class="enlace" data-accion="tono-quitar-fijo">usar el original</button>` : ""}</span>` : ""}
                 ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}</div></header>
             <div class="letra">${letraHTML(c.letra, S.transponer, tonoFinal) || '<p class="ayuda">Esta alabanza todavía no tiene letra.</p>'}</div>
           </article>
@@ -616,6 +623,7 @@
           <label class="etiqueta">Tono<input class="campo" id="f-tono" name="tono" autocomplete="off" autocapitalize="characters" placeholder="G" value="${esc(c.tono)}"></label>
           <label class="etiqueta">BPM<input class="campo" id="f-bpm" name="bpm" inputmode="numeric" placeholder="72" value="${esc(c.bpm)}"></label>
         </div>
+        ${fijoDe(c) ? `<p class="ayuda">Se toca en <b>${esc(tonoActual(c))}</b> (tono fijado). Aquí van el tono y los acordes originales, en ${esc(A.tonoDe(c))}.</p>` : ""}
         <label class="etiqueta">Categoría<select class="campo" id="f-categoria" name="categoria" style="border-radius:12px;min-height:48px">
           <option value="">Sin categoría</option>${CATEGORIAS.map((x) => `<option ${c.categoria === x.id ? "selected" : ""}>${x.id}</option>`).join("")}</select></label>
         <label class="etiqueta">Link de la versión que seguimos<input class="campo" id="f-link" name="link" type="url" inputmode="url" autocapitalize="none" placeholder="https://youtube.com/…" value="${esc(c.link)}"></label>
@@ -893,9 +901,11 @@
     };
     if (!datos.titulo) { f.titulo.focus(); return avisar("Escribe el nombre de la alabanza.", true); }
     if (datos.link && !/^https?:\/\//i.test(datos.link)) datos.link = "https://" + datos.link;
+    const antes = S.cancionId && S.canciones[S.cancionId];
+    if (fijoDe(antes)) datos.fijo = fijoDe(antes);
     try {
       const id = await guardarCancion(S.cancionId, datos, f.privada.checked);
-      S.cancionId = id; S.transponer = 0;
+      S.cancionId = id; S.transponer = fijoDe(datos);
       S.prefill = null;
       irA("cancion"); avisar("Alabanza guardada.");
     } catch (err) { errorGuardar(err); }
@@ -964,7 +974,18 @@
       case "siguiente": return mover(1);
       case "tono-subir": S.transponer = (S.transponer + 1) % 12; return render();
       case "tono-bajar": S.transponer = (S.transponer - 1) % 12; return render();
-      case "tono-original": S.transponer = 0; return render();
+      case "tono-original": S.transponer = fijoDe(c); return render();
+      case "tono-fijar": case "tono-quitar-fijo": {
+        const pasos = d.accion === "tono-fijar" ? ((S.transponer % 12) + 18) % 12 - 6 : 0;
+        const { privada, ...datos } = c;
+        if (pasos) datos.fijo = pasos; else delete datos.fijo;
+        datos.actualizado = Date.now();
+        try {
+          await guardarCancion(S.cancionId, datos, !!privada); S.transponer = pasos; render();
+          avisar(pasos ? `Fijada en ${tonoActual(S.canciones[S.cancionId])}. Así la verá todo el equipo.` : `Volvió a su tono original, ${A.tonoDe(c)}.`);
+        } catch (err) { errorGuardar(err); }
+        return;
+      }
       case "bpm-mas": case "bpm-menos": {
         const base = metro.bpm || +((c && c.bpm) || 0) || 72;
         metro.bpm = Math.max(30, Math.min(240, base + (d.accion === "bpm-mas" ? 2 : -2)));
