@@ -364,6 +364,31 @@
     render(); if (n) avisar(`${n} alabanzas agregadas.`);
   }
 
+  /* importar/repertorios.json: [{ nombre, fecha, lista }] con la lista escrita como en WhatsApp.
+     Se agrega si no hay otro con el mismo nombre y fecha; si en esa fecha hay uno vacío, se llena ese. */
+  let repsImportar = null;
+  function repsPendientes() {
+    if (!puede("borrar")) return [];
+    if (repsImportar === null) {
+      repsImportar = [];
+      fetch("importar/repertorios.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).then((l) => {
+        repsImportar = Array.isArray(l) ? l.filter((r) => r && r.nombre && r.lista) : []; render();
+      }).catch(() => {});
+    }
+    const hay = Object.values(S.repertorios);
+    return repsImportar.filter((n) => !hay.some((r) => clave(r.nombre) === clave(n.nombre) && r.fecha === (n.fecha || "")));
+  }
+  async function importarRepertorios() {
+    const lista = repsPendientes();
+    if (!lista.length || !confirm(`¿Agregar ${lista.map((r) => "“" + r.nombre + "”").join(", ")} a los repertorios?`)) return;
+    for (const n of lista) {
+      const vacio = Object.values(S.repertorios).find((r) => r.fecha === (n.fecha || "") && !(r.items || []).length);
+      try { await guardarRepertorio(vacio ? vacio.id : null, { nombre: n.nombre, fecha: n.fecha || "", items: leerLista(n.lista).items }); }
+      catch (err) { errorGuardar(err); break; }
+    }
+    render(); avisar("Repertorio agregado.");
+  }
+
   function vistaCancionero() {
     const lista = filtradas(), total = todas().length;
     const cuenta = (id) => todas().filter((c) => c.categoria === id).length;
@@ -403,7 +428,8 @@
     const { proximos, pasados } = repertoriosOrdenados(), editable = puede("editar");
     let h = `<div class="envoltura pagina">${avisos()}
       <div class="fila fila--entre"><div class="seccion-titulo"><h1>Repertorios</h1><p>Vigilias, ensayos y cultos, con su orden y sus tonos.</p></div>
-        ${editable ? `<button class="boton boton--principal" data-accion="rep-nuevo">${ic("mas")} Nuevo repertorio</button>` : ""}</div>`;
+        <div class="fila">${(() => { const l = S.cargado ? repsPendientes() : []; return l.length ? `<button class="boton" data-accion="importar-reps">${ic("bajar")} Importar ${l.length === 1 ? esc(l[0].nombre) : l.length + " repertorios"}</button>` : ""; })()}
+        ${editable ? `<button class="boton boton--principal" data-accion="rep-nuevo">${ic("mas")} Nuevo repertorio</button>` : ""}</div></div>`;
     if (!S.cargado) return h + `<div class="esqueleto"></div><div class="esqueleto"></div></div>`;
     if (!proximos.length && !pasados.length) {
       return h + `<div class="vacio"><b>Todavía no hay repertorios</b>
@@ -929,6 +955,7 @@
       }
       case "pdf": return descargarPDF(S.rep);
       case "importar": return importarPendientes();
+      case "importar-reps": return importarRepertorios();
       case "nueva": S.prefill = null; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
       case "editar": S.editorPestana = "escribir"; return irA("editar");
       case "cancelar-edicion": S.prefill = null; return irA(S.cancionId ? "cancion" : S.volverA === "repertorio" ? (S.vista === "editar" && S.contexto === S.rep ? "repertorio" : "elegir") : "cancionero");
