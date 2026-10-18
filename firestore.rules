@@ -26,6 +26,16 @@ service cloud.firestore {
       allow read: if true;
       allow write: if miembro();
     }
+    // Partituras privadas (las del saxo): solo el dueño y los correos que él pone en acceso/partituras { permitidos: [...] }.
+    function rutaAcceso() { return /databases/$(database)/documents/acceso/partituras; }
+    function vePartituras() { return dueno() || (request.auth != null && exists(rutaAcceso()) && correo() in get(rutaAcceso()).data.permitidos); }
+    match /partituras/{id} {
+      allow read: if vePartituras();
+      allow write: if dueno();
+    }
+    match /acceso/{doc} {
+      allow read, write: if dueno();
+    }
     match /config/{doc} {
       allow read: if request.auth != null;
       allow write: if lider();

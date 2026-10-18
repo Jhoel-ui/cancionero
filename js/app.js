@@ -69,6 +69,7 @@
     transponer: 0, modo: "practica",
     compartir: false, borrando: false, editorPestana: "escribir",
     fuente: null, cargado: false, sinConexion: false,
+    partituras: {}, acceso: null, llave: "", // partituras privadas y quién puede verlas
   };
   const app = document.getElementById("app");
 
@@ -105,6 +106,66 @@
      por el nombre ("Salmo 91" encuentra "Salmos 91"). Los repertorios viejos (id = fecha, canciones: [ids])
      se leen como una lista simple. */
   const suave = (t) => clave(t).split(" ").map((w) => w.replace(/s$/, "")).join(" ");
+
+  /* ---------- Partituras privadas ---------- */
+  // Las partituras del saxo solo las leen el dueño y los correos que él permite (acceso/partituras).
+  const duenoCorreo = String((window.CONFIG_FIREBASE || {}).dueno || "").toLowerCase();
+  const esDueno = () => !!S.fuente && (S.fuente.modo === "local"
+    || !!(S.fuente.cuenta && duenoCorreo && String(S.fuente.cuenta.correo || "").toLowerCase() === duenoCorreo));
+  // Partituras de esas alabanzas, en ese orden y sin repetir (un popurrí sirve para varias alabanzas).
+  // Un popurrí va en la primera de sus alabanzas que no tenga partitura propia.
+  function gruposPartitura(titulos) {
+    const lista = Object.values(S.partituras), vistos = new Set(), grupos = [];
+    const de = (t) => { const k = suave(t); return lista.filter((p) => p.pagina === 1 && (p.canciones || []).some((x) => suave(x) === k)); };
+    const poner = (p) => { vistos.add(p.clave);
+      grupos.push({ titulo: p.titulo, paginas: lista.filter((q) => q.clave === p.clave).sort((a, b) => a.pagina - b.pagina) }); };
+    for (const t of titulos) {
+      const ps = de(t), propia = ps.some((p) => p.canciones.length === 1);
+      ps.filter((p) => !vistos.has(p.clave) && (!propia || p.canciones.length === 1)).forEach(poner);
+    }
+    titulos.forEach((t) => de(t).filter((p) => !vistos.has(p.clave)).forEach(poner));
+    return grupos;
+  }
+  const imagenValida = (src) => /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(src || "");
+  function abrirVisor(titulo, grupos) {
+    cerrarVisor();
+    const v = document.createElement("div");
+    v.className = "visor"; v.id = "visor";
+    v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true"); v.setAttribute("aria-label", titulo);
+    v.innerHTML = `<header class="visor__cab"><b>${esc(titulo)}</b><button class="boton boton--icono" data-cerrar-visor aria-label="Cerrar">${ic("x")}</button></header>
+      <div class="visor__hojas">${grupos.map((g) => `<section>${grupos.length > 1 ? `<h2>${esc(g.titulo)}</h2>` : ""}
+        ${g.paginas.filter((p) => imagenValida(p.imagen)).map((p) => `<img src="${p.imagen}" alt="${esc(g.titulo)}, página ${p.pagina} de ${p.total}" loading="lazy">`).join("")}</section>`).join("")}</div>`;
+    v.addEventListener("click", (e) => { if (e.target.closest("[data-cerrar-visor]")) cerrarVisor(); });
+    document.body.appendChild(v); document.body.classList.add("sin-scroll");
+    v.querySelector("button").focus();
+  }
+  function cerrarVisor() {
+    const v = document.getElementById("visor");
+    if (v) { v.remove(); document.body.classList.remove("sin-scroll"); }
+  }
+  // Las partituras llegan cifradas en importar/partituras.enc.json; la llave viene solo en el link que recibe el dueño
+  // (#partituras=…), que nunca llega a un servidor. Al subirlas quedan en Firestore, protegidas por las reglas.
+  const olvidarLlave = () => { S.llave = ""; try { sessionStorage.removeItem("cr-llave-part"); } catch (_) {} };
+  async function subirPartituras() {
+    const bytes = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); s += "=".repeat((4 - s.length % 4) % 4);
+      return Uint8Array.from(atob(s), (ch) => ch.charCodeAt(0)); };
+    avisar("Subiendo partituras…");
+    try {
+      const llave = await crypto.subtle.importKey("raw", bytes(S.llave), "AES-GCM", false, ["decrypt"]);
+      const { piezas } = await (await fetch("importar/partituras.enc.json", { cache: "no-cache" })).json();
+      let n = 0;
+      for (const p of piezas) {
+        const plano = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes(p.iv) }, llave, bytes(p.datos));
+        const d = JSON.parse(new TextDecoder().decode(plano));
+        if (!imagenValida(d.imagen)) continue;
+        await S.fuente.guardar("partituras", `${d.clave}-${d.pagina}`, d);
+        n++;
+      }
+      olvidarLlave(); render(); avisar(`Listo: ${n} páginas de partituras subidas.`);
+    } catch (e) {
+      if (e && e.name === "OperationError") avisar("El link de las partituras no es correcto.", true); else errorGuardar(e);
+    }
+  }
   function buscarPorTitulo(t) {
     const k = suave(t); if (!k) return null;
     const parecidas = [];
@@ -288,6 +349,10 @@
     if (S.sinConexion) h += `<p class="aviso">${ic("info")}<span><b>No se pudo abrir el cancionero.</b> Revisa tu conexión y vuelve a cargar la página.</span></p>`;
     if (S.fuente && S.fuente.modo === "local") h += `<p class="aviso">${ic("info")}<span><b>Modo de prueba:</b> lo que guardes queda solo en este dispositivo.</span></p>`;
     if (S.fuente && S.fuente.modo === "firebase" && S.fuente.cuenta && !S.fuente.permisos.editar) h += `<p class="aviso">${ic("info")}<span><b>${esc(S.fuente.cuenta.correo)}</b> todavía no está en la lista del equipo. Pide al líder que te agregue para poder editar.</span></p>`;
+    if (S.llave) h += esDueno()
+      ? `<div class="aviso">${ic("candado")}<span><b>Partituras del saxo listas para subir.</b> Solo tú y quienes permitas en Equipo podrán verlas.</span>
+          <button class="boton boton--chico boton--principal" data-accion="subir-partituras">Subir partituras</button></div>`
+      : `<p class="aviso">${ic("candado")}<span><b>Para subir las partituras</b>, inicia sesión con tu cuenta (${esc(duenoCorreo || "la del dueño")}).</span></p>`;
     return h;
   }
 
@@ -492,7 +557,7 @@
               : editable ? `<button class="cancion" data-registrar="${i}"><b>${esc(tituloItem(it))}</b><span>${esc(sub)}</span></button>`
               : `<span class="cancion"><b>${esc(tituloItem(it))}</b><span>${esc(sub)}</span></span>`}</li>`;
     }).join("");
-    const txt = mensajeWhatsApp(r.id);
+    const txt = mensajeWhatsApp(r.id), partituras = gruposPartitura(cancionesDe(r.id).map(tituloItem));
     return `<div class="envoltura pagina">${avisos()}
       <div class="fila"><button class="boton boton--plano" data-accion="reps">${ic("izq")} Repertorios</button></div>
       <div class="fila fila--entre"><div class="seccion-titulo"><h1>${esc(r.nombre)}</h1><p>${r.fecha ? fechaLarga(r.fecha) + " · " : ""}${cuantas(total)}</p></div>
@@ -507,7 +572,8 @@
           : editable && cancionesDe(r.id).some((it) => !enlazada(it)) ? `<p class="ayuda">Toca una alabanza “Sin letra” para registrarla en el cancionero; quedará enlazada aquí.</p>` : ""}
         <ol class="lista-rep lista-rep--rep${ord ? " lista-rep--ord" : ""}" id="lista-rep">${filas}</ol>
         <div class="fila">${primera ? `<button class="boton boton--principal" data-abrir="${primera}" data-contexto="${r.id}" data-modo="presentacion">${ic("pantalla")} Presentar en vivo</button>` : ""}
-          <button class="boton" data-accion="pdf">${ic("bajar")} Descargar PDF</button></div>
+          <button class="boton" data-accion="pdf">${ic("bajar")} Descargar PDF</button>
+          ${partituras.length ? `<button class="boton" data-accion="partituras-rep">${ic("nota")} Partituras (${partituras.length})</button>` : ""}</div>
       </div>
       <aside class="panel"><h2>Enviar al grupo de WhatsApp</h2><pre class="mensaje" id="mensaje">${esc(txt)}</pre>
         <div class="fila"><button class="boton boton--principal" data-accion="copiar">${ic("copiar")} Copiar</button>
@@ -617,6 +683,7 @@
                 ${!enFijo(c) ? `<button class="boton boton--chico" data-accion="tono-original">Volver a ${esc(tonoActual(c))}</button>` : ""}
                 ${puede("editar") && !enFijo(c) ? `<button class="boton boton--chico boton--principal" data-accion="tono-fijar">${ic("check")} Fijar en ${esc(tonoFinal)}</button>` : ""}
                 ${fijoDe(c) && enFijo(c) ? `<span class="ayuda">Fijado · original ${esc(A.tonoDe(c))}${puede("editar") ? ` · <button class="enlace" data-accion="tono-quitar-fijo">usar el original</button>` : ""}</span>` : ""}
+                ${gruposPartitura([c.titulo]).length ? `<button class="boton boton--chico" data-accion="partitura">${ic("nota")} Partitura</button>` : ""}
                 ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}</div></header>
             <div class="letra">${letraHTML(c.letra, S.transponer, tonoFinal) || '<p class="ayuda">Esta alabanza todavía no tiene letra.</p>'}</div>
           </article>
@@ -652,7 +719,12 @@
         <label class="etiqueta">Líderes (pueden borrar)<textarea class="campo" name="lideres" rows="4" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(f.equipo.lideres)}</textarea></label>
         <label class="etiqueta">Miembros (agregan y editan)<textarea class="campo" name="miembros" rows="8" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(f.equipo.miembros)}</textarea></label>
         <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} Guardar equipo</button></div>
-      </form></div>`;
+      </form>
+      ${esDueno() ? `<form id="form-acceso" class="formulario" novalidate>
+        <div class="seccion-titulo"><h2>${ic("candado")} Partituras del saxo</h2><p>Solo tú y estos correos pueden verlas. Nadie más del equipo puede cambiar esta lista.</p></div>
+        <label class="etiqueta">Pueden ver las partituras<textarea class="campo" name="permitidos" rows="4" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(S.acceso && S.acceso.permitidos)}</textarea></label>
+        <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} Guardar acceso</button></div>
+      </form>` : ""}</div>`;
   }
   function vistaEditar() {
     const c = S.cancionId ? S.canciones[S.cancionId] || {} : S.prefill || {};
@@ -744,6 +816,7 @@
   }
   function irA(vista) {
     if (vista !== "cancion") { cerrarPresentacion(); metro.parar(); }
+    cerrarVisor();
     S.vista = vista; S.borrando = false; app.innerHTML = ""; render(); window.scrollTo(0, 0);
     const sec = SECCION[vista];
     if (sec && location.hash !== "#" + sec) { try { history.replaceState(null, "", "#" + sec); } catch (_) {} }
@@ -799,6 +872,7 @@
     else mover(a === "siguiente" ? 1 : -1);
   });
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("visor")) return cerrarVisor();
     if (!document.getElementById("presentacion")) return;
     if (e.key === "Escape") { cerrarPresentacion(); render(); }
     if (e.key === "ArrowRight" || e.key === "PageDown") mover(1);
@@ -941,8 +1015,14 @@
       S.buscar = document.getElementById("q-portada").value.trim(); S.categoria = "";
       return irA("cancionero");
     }
+    const limpiar = (t) => [...new Set(t.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter((x) => x.includes("@")))];
+    if (e.target.id === "form-acceso") {
+      const permitidos = limpiar(e.target.permitidos.value);
+      try { await S.fuente.guardar("acceso", "partituras", { permitidos }); S.acceso = { permitidos }; avisar("Acceso a partituras guardado."); render(); }
+      catch (_) { avisar("No se pudo guardar el acceso.", true); }
+      return;
+    }
     if (e.target.id === "form-equipo") {
-      const limpiar = (t) => [...new Set(t.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter((x) => x.includes("@")))];
       try { await S.fuente.guardarEquipo({ lideres: limpiar(e.target.lideres.value), miembros: limpiar(e.target.miembros.value) }); avisar("Equipo guardado."); render(); }
       catch (_) { avisar("No se pudo guardar el equipo.", true); }
       return;
@@ -1054,6 +1134,9 @@
         return;
       }
       case "pdf": return descargarPDF(S.rep);
+      case "partituras-rep": return abrirVisor("Partituras · " + rep(S.rep).nombre, gruposPartitura(cancionesDe(S.rep).map(tituloItem)));
+      case "partitura": return abrirVisor(c.titulo, gruposPartitura([c.titulo]));
+      case "subir-partituras": return subirPartituras();
       case "importar": return importarPendientes();
       case "poner-links": return ponerLinks();
       case "importar-reps": return importarRepertorios();
@@ -1118,6 +1201,12 @@
 
   /* ---------- Inicio ---------- */
   document.querySelectorAll("[data-emblema]").forEach((el) => { el.innerHTML = emblema(+el.dataset.emblema, el.dataset.fondo || "var(--crema)"); });
+  const llaveEnLink = /(?:^#|&)partituras=([\w-]+)/.exec(location.hash);
+  try { S.llave = llaveEnLink ? llaveEnLink[1] : sessionStorage.getItem("cr-llave-part") || ""; } catch (_) { S.llave = llaveEnLink ? llaveEnLink[1] : ""; }
+  if (llaveEnLink) {
+    try { sessionStorage.setItem("cr-llave-part", S.llave); } catch (_) {}
+    try { history.replaceState(null, "", location.pathname); } catch (_) {}
+  }
   const inicial = (location.hash || "").slice(1);
   S.vista = ["cancionero", "repertorio"].includes(inicial) ? inicial : "inicio";
   render();
@@ -1141,7 +1230,18 @@
       }
     };
     verPrivadas();
-    if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => { verPrivadas(); render(); });
+    // Partituras: se intentan leer con cualquier cuenta; si las reglas no la dejan, simplemente no aparecen.
+    let dejarPartituras = null, dejarAcceso = null;
+    const verPartituras = () => {
+      if (dejarPartituras) { dejarPartituras(); dejarPartituras = null; }
+      if (dejarAcceso) { dejarAcceso(); dejarAcceso = null; }
+      S.partituras = {}; S.acceso = null;
+      if (fuente.modo !== "local" && !fuente.cuenta) return;
+      dejarPartituras = fuente.escuchar("partituras", (datos) => { S.partituras = datos; render(); }, () => { S.partituras = {}; render(); }) || null;
+      if (esDueno()) dejarAcceso = fuente.escuchar("acceso", (datos) => { S.acceso = datos.partituras || { permitidos: [] }; render(); }, () => {}) || null;
+    };
+    verPartituras();
+    if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => { verPrivadas(); verPartituras(); render(); });
     fuente.escuchar("repertorios", (datos) => {
       const r = {};
       for (const [id, x] of Object.entries(datos)) r[id] = leerRepertorio(id, x);
