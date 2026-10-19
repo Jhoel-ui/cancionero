@@ -39,12 +39,12 @@
       <g mask="url(#in-m-penta)">${pieza("in-penta", P.pentagrama[0])}</g>
       ${P.renovacion.map((p, i) => pieza("in-ren", p, i)).join("")}
       ${P.estrellas.map((p, i) => pieza("in-estrella", p, i)).join("")}
-      <g class="in-vuelo"><g class="in-paloma">
+      <g class="in-vuelo"><g class="in-vuelo-y"><g class="in-paloma">
         <g class="in-silueta" fill="#4A3222">${trazo(P.silueta[0])}</g>
         ${pieza("in-ala in-ala--tras", P.ala_tras[0])}
         ${pieza("in-cuerpo", P.cuerpo[0])}
         ${pieza("in-ala in-ala--del", P.ala_del[0])}
-      </g></g>
+      </g></g></g>
     </g>
     <g mask="url(#in-m-logo)"><rect class="in-luz" x="-260" y="0" width="260" height="750" fill="url(#in-brillo)"/></g>
   </svg>`;
@@ -76,12 +76,13 @@
   .in-estrella{opacity:0;transform-origin:50% 50%;animation:in-estrella .6s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(2s + var(--i) * 90ms)}
   .in-halo{opacity:0;transform-origin:50% 50%;animation:in-halo 1.2s cubic-bezier(.23,1,.32,1) 1.85s both}
   .in-luz{transform-box:view-box;animation:in-luz .9s cubic-bezier(.45,0,.25,1) 1.95s both}
-  .in-vuelo{transform-origin:50% 50%;animation:in-vuelo 1.55s cubic-bezier(.33,.0,.2,1) .4s both}
-  .in-paloma{transform-box:view-box;transform-origin:395px 300px;animation:in-posa .45s cubic-bezier(.34,1.5,.64,1) 1.9s both}
-  .in-silueta{opacity:0;animation:in-aparece .25s ease .95s forwards,in-apaga .15s ease 2.37s forwards}
+  .in-vuelo{animation:in-vuelo-x 1.5s cubic-bezier(.22,.55,.3,1) .4s both}
+  .in-vuelo-y{opacity:0;transform-box:view-box;transform-origin:395px 300px;animation:in-vuelo-y 1.5s cubic-bezier(.4,.1,.3,1) .4s both,in-gira-paloma 1.5s cubic-bezier(.3,0,.3,1) .4s both,in-crece 1.5s cubic-bezier(.3,0,.3,1) .4s both,in-aparece .25s linear .4s both}
+  .in-paloma{transform-box:view-box;transform-origin:395px 300px;animation:in-posa .5s cubic-bezier(.33,1,.68,1) 1.88s both}
+  .in-silueta{opacity:0;animation:in-aparece .5s ease .6s forwards,in-apaga .15s ease 2.37s forwards}
   .in-ala{transform-box:view-box}
-  .in-ala--del{transform-origin:380px 318px;animation:in-aleteo-del .3s ease-in-out .4s 4 alternate both}
-  .in-ala--tras{transform-origin:398px 296px;animation:in-aleteo-tras .3s ease-in-out .4s 4 alternate both}
+  .in-ala--del{transform-origin:380px 318px;animation:in-aleteo-del .32s cubic-bezier(.45,0,.55,1) .4s 4 alternate both}
+  .in-ala--tras{transform-origin:398px 296px;animation:in-aleteo-tras .32s cubic-bezier(.45,0,.55,1) .4s 4 alternate both}
   @keyframes in-dibuja{to{stroke-dashoffset:0}}
   @keyframes in-gira{from{transform:rotate(-70deg) scale(.9)}to{transform:none}}
   @keyframes in-letra{from{opacity:0;transform:translateY(14px) scale(.6)}to{opacity:1;transform:none}}
@@ -93,14 +94,12 @@
   @keyframes in-estrella{0%{opacity:0;transform:scale(0) rotate(-90deg);fill:#f3d896}60%{opacity:1;fill:#f6e2ad}100%{opacity:1;transform:none;fill:#fff}}
   @keyframes in-halo{0%{opacity:0;transform:scale(.4)}35%{opacity:1}100%{opacity:.55;transform:scale(1.15)}}
   @keyframes in-luz{from{transform:translateX(0)}to{transform:translateX(1010px)}}
-  @keyframes in-vuelo{
-    0%{transform:translate(-520px,-430px) rotate(14deg) scale(.55);opacity:0}
-    12%{opacity:1}
-    45%{transform:translate(-250px,-250px) rotate(8deg) scale(.72)}
-    78%{transform:translate(-60px,-70px) rotate(2deg) scale(.92)}
-    100%{transform:none;opacity:1}}
-  @keyframes in-posa{0%{transform:none}35%{transform:translateY(7px) scale(1.03,.96)}70%{transform:translateY(-2px)}100%{transform:none}}
-  @keyframes in-aleteo-del{from{transform:none}to{transform:rotate(-58deg) scale(.92,.7)}}
+  @keyframes in-vuelo-x{from{translate:-520px 0}to{translate:0 0}}
+  @keyframes in-vuelo-y{from{translate:0 -430px}to{translate:0 0}}
+  @keyframes in-gira-paloma{from{rotate:14deg}to{rotate:0deg}}
+  @keyframes in-crece{from{scale:.55}to{scale:1}}
+  @keyframes in-posa{0%{transform:none}40%{transform:translateY(5px) scale(1.02,.97)}100%{transform:none}}
+  @keyframes in-aleteo-del{from{transform:none}to{transform:rotate(-45deg) scale(.94,.75)}}
   @keyframes in-aleteo-tras{from{transform:none}to{transform:rotate(18deg) scaleY(.35)}}
   @keyframes in-aparece{to{opacity:1}}
   @keyframes in-apaga{to{opacity:0}}
