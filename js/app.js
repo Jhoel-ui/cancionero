@@ -159,12 +159,22 @@
         <span class="visor__herr">${zoomHTML()}
           <button class="boton boton--icono" data-visor-girar aria-label="Girar">${ic("girar")}</button>
           <button class="boton boton--icono" data-cerrar-visor aria-label="Cerrar">${ic("x")}</button></span></header>
-      <div class="visor__hojas partitura" style="--zoom:${zoomPart}">${grupos.length ? hojasHTML(grupos) : `<p class="visor__vacio">No hay partitura de ${esc(nombreInstr())} para esta alabanza.</p>`}</div>`;
+      <div class="visor__hojas partitura" style="--zoom:${zoomPart}">${grupos.length ? hojasHTML(grupos) : `<p class="visor__vacio">No hay partitura de ${esc(nombreInstr())} para esta alabanza.</p>`}
+        ${navegar ? adelantoHTML('data-visor-mover="1"') : ""}</div>`;
     activarPellizco(v.querySelector(".partitura"));
     const foco = v.querySelector("[data-cerrar-visor]"); if (foco && !v.contains(document.activeElement)) foco.focus();
   }
   const instrRep = () => (verComo === "letra" ? "saxo" : verComo);
   const nombreInstr = () => (INSTRUMENTOS.find((x) => x.id === verComo) || INSTRUMENTOS[0]).nombre;
+  // Adelanto: el comienzo de la partitura que sigue, al final de la actual, para entrar a tiempo sin buscarla.
+  function adelantoHTML(accion) {
+    const ids = listaContexto(), sig = ids[ids.indexOf(S.cancionId) + 1], c = sig && S.canciones[sig];
+    if (!c) return "";
+    const g = gruposPartitura([c.titulo], viendoPartitura() ? verComo : instrRep())[0];
+    const pag = g && g.paginas.find((x) => imagenValida(x.imagen));
+    return `<button class="adelanto" ${accion}><span class="adelanto__cab"><span>Sigue</span><b>${esc(c.titulo)}</b>${ic("der")}</span>
+      ${pag ? `<span class="adelanto__hoja"><img src="${pag.imagen}" alt="Comienzo de ${esc(g.titulo)}" draggable="false"></span>` : `<span class="adelanto__sin">Sin partitura de ${esc(nombreInstr())}</span>`}</button>`;
+  }
   function abrirVisorCancion() {
     const c = S.canciones[S.cancionId]; if (!c) return;
     abrirVisor(c.titulo, gruposPartitura([c.titulo], viendoPartitura() ? verComo : null), true);
@@ -173,7 +183,11 @@
     const b = e.target.closest("button"); if (!b) return;
     if (b.hasAttribute("data-cerrar-visor")) return cerrarVisor();
     if (b.dataset.zoom) return cambiarZoom(+b.dataset.zoom);
-    if (b.dataset.visorMover) { S.visorFijo = true; mover(+b.dataset.visorMover); S.visorFijo = false; abrirVisorCancion(); return; }
+    if (b.dataset.visorMover) {
+      S.visorFijo = true; mover(+b.dataset.visorMover); S.visorFijo = false; abrirVisorCancion();
+      const h = document.querySelector(".visor__hojas"); if (h) h.scrollTo(0, 0);
+      return;
+    }
     if (b.hasAttribute("data-visor-girar")) {
       const v = document.getElementById("visor");
       // En Android se pone en pantalla completa y se gira de verdad; si el teléfono no deja (iPhone), se gira la hoja.
@@ -757,6 +771,7 @@
               ${c.link ? `<a class="boton boton--chico boton--principal" href="${esc(c.link)}" target="_blank" rel="noopener">${ic("play")} Escuchar versión</a>` : ""}</header>
             ${gruposPartitura([c.titulo], verComo).length
               ? `<div class="partitura" id="partitura" style="--zoom:${zoomPart}">${hojasHTML(gruposPartitura([c.titulo], verComo))}</div>
+                 ${adelantoHTML('data-accion="siguiente"')}
                  <p class="ayuda">Acerca con dos dedos o con + y −. Gira el teléfono para verla en horizontal.</p>`
               : `<p class="ayuda">Todavía no hay partitura de ${esc(nombreInstr())} para esta alabanza. <button class="enlace" data-ver="letra">Ver la letra</button></p>`}
           </article>` : `<article class="hoja">

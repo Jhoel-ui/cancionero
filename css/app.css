@@ -407,3 +407,14 @@ textarea.campo { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, C
 .visor--girado { inset: auto; top: 0; left: 100vw; width: 100vh; height: 100vw; width: 100dvh; height: 100dvw; transform-origin: top left; transform: rotate(90deg); }
 body.sin-scroll { overflow: hidden; }
 .visor .zoom-num { color: var(--tinta-inv); }
+
+/* Adelanto de la partitura que sigue: solo el comienzo de la primera hoja; al tocarlo se pasa a esa alabanza. */
+.adelanto { display: grid; gap: 8px; width: min(100%, 900px); margin-inline: auto; padding: 10px; border: 1px dashed var(--linea); border-radius: 10px; background: var(--arena-2); color: var(--tinta); text-align: left; cursor: pointer; font: inherit; }
+.adelanto__cab { display: flex; align-items: center; gap: 8px; }
+.adelanto__cab span { font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-2); }
+.adelanto__cab b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adelanto__hoja { display: block; aspect-ratio: 2.3; overflow: hidden; border-radius: 6px; background: #fff; }
+.adelanto__hoja img { display: block; width: 100%; height: auto; }
+.adelanto__sin { font-size: .875rem; color: var(--tinta-2); }
+.visor .adelanto { background: rgb(255 255 255 / .06); border-color: rgb(255 255 255 / .25); color: var(--tinta-inv); }
+.visor .adelanto__cab span { color: #d9bf86; }
