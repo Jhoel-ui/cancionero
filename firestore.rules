@@ -26,12 +26,24 @@ service cloud.firestore {
       allow read: if true;
       allow write: if miembro();
     }
-    // Partituras privadas (las del saxo): solo el dueño y los correos que él pone en acceso/partituras { permitidos: [...] }.
-    function rutaAcceso() { return /databases/$(database)/documents/acceso/partituras; }
-    function vePartituras() { return dueno() || (request.auth != null && exists(rutaAcceso()) && correo() in get(rutaAcceso()).data.permitidos); }
-    match /partituras/{id} {
-      allow read: if vePartituras();
+    // Partituras privadas por instrumento: cada colección la leen solo el dueño y los correos de su lista
+    // acceso/<instrumento> { permitidos: [...] }. El saxofonista no ve las de trompeta ni al revés.
+    function ve(instr) {
+      return dueno() || (request.auth != null
+        && exists(/databases/$(database)/documents/acceso/$(instr))
+        && correo() in get(/databases/$(database)/documents/acceso/$(instr)).data.permitidos);
+    }
+    match /partituras_saxo/{id} {
+      allow read: if ve("saxo");
       allow write: if dueno();
+    }
+    match /partituras_trompeta/{id} {
+      allow read: if ve("trompeta");
+      allow write: if dueno();
+    }
+    // Colección vieja (todas juntas): solo el dueño, para poder borrarla.
+    match /partituras/{id} {
+      allow read, write: if dueno();
     }
     match /acceso/{doc} {
       allow read, write: if dueno();

@@ -70,7 +70,7 @@
     transponer: 0, modo: "practica",
     compartir: false, borrando: false, editorPestana: "escribir",
     fuente: null, cargado: false, sinConexion: false,
-    partituras: {}, acceso: null, llave: "", // partituras privadas y quién puede verlas
+    partituras: {}, acceso: {}, llave: "", // partituras privadas por instrumento y quién puede ver cada una
     visorFijo: false,
   };
   const app = document.getElementById("app");
@@ -112,15 +112,18 @@
   const suave = (t) => clave(t).split(" ").map((w) => w.replace(/s$/, "")).join(" ");
 
   /* ---------- Partituras privadas ---------- */
-  // Las partituras del saxo solo las leen el dueño y los correos que él permite (acceso/partituras).
+  // Cada instrumento tiene su colección (partituras_saxo, partituras_trompeta) y su lista acceso/<instrumento>:
+  // el saxofonista no ve las de trompeta ni al revés. Solo el dueño sube partituras y cambia las listas.
   const duenoCorreo = String((window.CONFIG_FIREBASE || {}).dueno || "").toLowerCase();
   const esDueno = () => !!S.fuente && (S.fuente.modo === "local"
     || !!(S.fuente.cuenta && duenoCorreo && String(S.fuente.cuenta.correo || "").toLowerCase() === duenoCorreo));
   const INSTRUMENTOS = [{ id: "saxo", boton: "Saxofonista", nombre: "saxofón" }, { id: "trompeta", boton: "Trompetista", nombre: "trompeta" }];
   const instrumentosDe = (p) => (Array.isArray(p.instrumentos) && p.instrumentos.length ? p.instrumentos : ["saxo"]);
-  // Quien puede ver alguna partitura ve los botones de todos los instrumentos (la trompeta aún no tiene, quedan listos).
-  const conPartituras = () => Object.keys(S.partituras).length > 0;
-  const viendoPartitura = () => verComo !== "letra" && conPartituras() && INSTRUMENTOS.some((i) => i.id === verComo);
+  const coleccionPart = (instr) => "partituras_" + instr;
+  // Botones de instrumento: cada quien ve solo los que puede leer; el dueño ve todos (aunque aún no tengan partituras).
+  const instrumentosVisibles = () => INSTRUMENTOS.filter((i) => esDueno() || Object.values(S.partituras).some((p) => instrumentosDe(p).includes(i.id)));
+  const conPartituras = () => instrumentosVisibles().length > 0;
+  const viendoPartitura = () => verComo !== "letra" && instrumentosVisibles().some((i) => i.id === verComo);
   // Partituras de esas alabanzas, en ese orden y sin repetir (un popurrí sirve para varias alabanzas).
   // Un popurrí va en la primera de sus alabanzas que no tenga partitura propia.
   function gruposPartitura(titulos, instrumento) {
@@ -164,7 +167,9 @@
     activarPellizco(v.querySelector(".partitura"));
     const foco = v.querySelector("[data-cerrar-visor]"); if (foco && !v.contains(document.activeElement)) foco.focus();
   }
-  const instrRep = () => (verComo === "letra" ? "saxo" : verComo);
+  // Lista de correos de cada instrumento (la lista vieja única, acceso/partituras, se toma como la del saxo).
+  const accesoDe = (instr) => ((S.acceso[instr] || (instr === "saxo" && S.acceso.partituras) || {}).permitidos || []);
+  const instrRep = () => (viendoPartitura() ? verComo : (instrumentosVisibles()[0] || INSTRUMENTOS[0]).id);
   const nombreInstr = () => (INSTRUMENTOS.find((x) => x.id === verComo) || INSTRUMENTOS[0]).nombre;
   // Adelanto: el comienzo de la partitura que sigue, al final de la actual, para entrar a tiempo sin buscarla.
   function adelantoHTML(accion) {
@@ -241,7 +246,10 @@
         const plano = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes(p.iv) }, llave, bytes(p.datos));
         const d = JSON.parse(new TextDecoder().decode(plano));
         if (!imagenValida(d.imagen)) continue;
-        await S.fuente.guardar("partituras", `${d.clave}-${d.pagina}`, d);
+        const instr = instrumentosDe(d)[0], id = `${d.clave}-${d.pagina}`;
+        await S.fuente.guardar(coleccionPart(instr), id, Object.assign(d, { instrumentos: [instr] }));
+        // Antes todas iban juntas en "partituras": se borra esa copia para que no quede a la vista de otros.
+        try { await S.fuente.borrar("partituras", id); } catch (_) {}
         n++;
       }
       olvidarLlave(); render(); avisar(`Listo: ${n} páginas de partituras subidas.`);
@@ -743,7 +751,7 @@
           <div class="barra-herr">
             ${conPartituras() ? `<div class="segmentos segmentos--ver" role="group" aria-label="Qué ver">
               <button data-ver="letra" aria-pressed="${!part}">Letra</button>
-              ${INSTRUMENTOS.map((x) => `<button data-ver="${x.id}" aria-pressed="${part && verComo === x.id}">${x.boton}</button>`).join("")}
+              ${instrumentosVisibles().map((x) => `<button data-ver="${x.id}" aria-pressed="${part && verComo === x.id}">${x.boton}</button>`).join("")}
             </div>` : ""}
             ${part ? `<div class="fila" style="gap:12px">${zoomHTML()}
               <button class="boton boton--chico" data-accion="partitura">${ic("pantalla")} Pantalla completa</button></div>` : `
@@ -812,13 +820,13 @@
     return `<div class="envoltura pagina">
       <div class="seccion-titulo"><h1>Equipo</h1><p>Quién puede agregar y editar alabanzas. Un correo de Google por línea.</p></div>
       <form id="form-equipo" class="formulario" novalidate>
-        <label class="etiqueta">Líderes (pueden borrar)<textarea class="campo" name="lideres" rows="4" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(f.equipo.lideres)}</textarea></label>
-        <label class="etiqueta">Miembros (agregan y editan)<textarea class="campo" name="miembros" rows="8" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(f.equipo.miembros)}</textarea></label>
+        <label class="etiqueta">Líderes (pueden borrar)<textarea class="campo" name="lideres" rows="4" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista((f.equipo || {}).lideres)}</textarea></label>
+        <label class="etiqueta">Miembros (agregan y editan)<textarea class="campo" name="miembros" rows="8" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista((f.equipo || {}).miembros)}</textarea></label>
         <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} Guardar equipo</button></div>
       </form>
       ${esDueno() ? `<form id="form-acceso" class="formulario" novalidate>
-        <div class="seccion-titulo"><h2>${ic("candado")} Partituras del saxo</h2><p>Solo tú y estos correos pueden verlas. Nadie más del equipo puede cambiar esta lista.</p></div>
-        <label class="etiqueta">Pueden ver las partituras<textarea class="campo" name="permitidos" rows="4" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(S.acceso && S.acceso.permitidos)}</textarea></label>
+        <div class="seccion-titulo"><h2>${ic("candado")} Partituras</h2><p>Cada lista ve solo las partituras de su instrumento: el saxofonista no ve las de trompeta ni al revés. Solo tú puedes cambiar estas listas.</p></div>
+        ${INSTRUMENTOS.map((x) => `<label class="etiqueta">Pueden ver las de ${x.nombre}<textarea class="campo" name="permitidos-${x.id}" rows="3" autocapitalize="off" spellcheck="false" placeholder="nombre@gmail.com">${lista(accesoDe(x.id))}</textarea></label>`).join("")}
         <div class="fila"><button class="boton boton--principal" type="submit">${ic("check")} Guardar acceso</button></div>
       </form>` : ""}</div>`;
   }
@@ -1114,8 +1122,13 @@
     }
     const limpiar = (t) => [...new Set(t.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter((x) => x.includes("@")))];
     if (e.target.id === "form-acceso") {
-      const permitidos = limpiar(e.target.permitidos.value);
-      try { await S.fuente.guardar("acceso", "partituras", { permitidos }); S.acceso = { permitidos }; avisar("Acceso a partituras guardado."); render(); }
+      try {
+        for (const x of INSTRUMENTOS) {
+          const permitidos = limpiar(e.target["permitidos-" + x.id].value);
+          await S.fuente.guardar("acceso", x.id, { permitidos }); S.acceso[x.id] = { permitidos };
+        }
+        avisar("Acceso a partituras guardado."); render();
+      }
       catch (_) { avisar("No se pudo guardar el acceso.", true); }
       return;
     }
@@ -1330,14 +1343,21 @@
     };
     verPrivadas();
     // Partituras: se intentan leer con cualquier cuenta; si las reglas no la dejan, simplemente no aparecen.
-    let dejarPartituras = null, dejarAcceso = null;
+    let dejar = [];
     const verPartituras = () => {
-      if (dejarPartituras) { dejarPartituras(); dejarPartituras = null; }
-      if (dejarAcceso) { dejarAcceso(); dejarAcceso = null; }
-      S.partituras = {}; S.acceso = null;
+      dejar.forEach((f) => f && f()); dejar = [];
+      S.partituras = {}; S.acceso = {};
       if (fuente.modo !== "local" && !fuente.cuenta) return;
-      dejarPartituras = fuente.escuchar("partituras", (datos) => { S.partituras = datos; render(); }, () => { S.partituras = {}; render(); }) || null;
-      if (esDueno()) dejarAcceso = fuente.escuchar("acceso", (datos) => { S.acceso = datos.partituras || { permitidos: [] }; render(); }, () => {}) || null;
+      const porInstr = {};
+      const juntar = () => { S.partituras = Object.assign({}, ...Object.values(porInstr)); render(); };
+      for (const x of INSTRUMENTOS) {
+        dejar.push(fuente.escuchar(coleccionPart(x.id), (datos) => {
+          const d = {};
+          for (const [id, p] of Object.entries(datos)) d[x.id + "/" + id] = Object.assign({}, p, { instrumentos: [x.id] });
+          porInstr[x.id] = d; juntar();
+        }, () => { porInstr[x.id] = {}; juntar(); }));
+      }
+      if (esDueno()) dejar.push(fuente.escuchar("acceso", (datos) => { S.acceso = datos; render(); }, () => {}));
     };
     verPartituras();
     if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => { verPrivadas(); verPartituras(); render(); });
