@@ -441,7 +441,7 @@
     if (S.fuente && S.fuente.modo === "local") h += `<p class="aviso">${ic("info")}<span><b>Modo de prueba:</b> lo que guardes queda solo en este dispositivo.</span></p>`;
     if (S.fuente && S.fuente.modo === "firebase" && S.fuente.cuenta && !S.fuente.permisos.editar) h += `<p class="aviso">${ic("info")}<span><b>${esc(S.fuente.cuenta.correo)}</b> todavía no está en la lista del equipo. Pide al líder que te agregue para poder editar.</span></p>`;
     if (S.llave) h += esDueno()
-      ? `<div class="aviso">${ic("candado")}<span><b>Partituras del saxo listas para subir.</b> Solo tú y quienes permitas en Equipo podrán verlas.</span>
+      ? `<div class="aviso">${ic("candado")}<span><b>Partituras de saxofón y trompeta listas para subir.</b> Cada una solo la ven tú y quienes pongas en su lista en Equipo.</span>
           <button class="boton boton--chico boton--principal" data-accion="subir-partituras">Subir partituras</button></div>`
       : `<p class="aviso">${ic("candado")}<span><b>Para subir las partituras</b>, inicia sesión con tu cuenta (${esc(duenoCorreo || "la del dueño")}).</span></p>`;
     return h;
