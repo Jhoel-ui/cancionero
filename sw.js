@@ -1,6 +1,6 @@
 // Guarda la página en el teléfono para que abra sin señal.
-const CACHE = "cancionero-v10";
-const ARCHIVOS = ["./", "index.html", "css/app.css", "js/config.js", "js/acordes.js", "js/datos.js", "js/app.js", "js/vendor/Sortable.min.js",
+const CACHE = "cancionero-v11";
+const ARCHIVOS = ["./", "index.html", "css/app.css", "js/intro.js", "js/config.js", "js/acordes.js", "js/datos.js", "js/app.js", "js/vendor/Sortable.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
 
 self.addEventListener("install", (e) => {
