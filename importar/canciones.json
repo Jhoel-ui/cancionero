@@ -260,10 +260,15 @@
  },
  {
   "titulo": "Santo por Siempre",
-  "tono": "G",
+  "tono": "C",
+  "autor": "Chris Tomlin y otros (trad. Bernardo Aguilar, Hugo Chapa, Danny Díaz)",
+  "bpm": 72,
   "categoria": "Vigilia",
+  "link": "https://www.youtube.com/watch?v=NZqEgIyWgUk",
   "privada": true,
-  "letra": "INTRO: C – Em – D – G – Em – D\n\nVerso 1:\n[G]Mil generaciones, se postran [C]a [G]adorarle,\nLe [Em]cantan al [D]Cordero que [C]Venció,\nLos [G]que nos precedieron y los [C]que en él [G]creerán.\nLe [Em]cantarán a [D]aquel que ya [C]venció..\n\nPre-coro:\nTu [C]nombre es más alto, tu nombre [Em]es más [D]grande.\nTu [Em]nombre, sobre [D]todo [Am]es, Sean [C]tronos, [Em]dominios\n[D]Poderes, potestades, tu [Em]nombre, sobre [D]todo [Am/E]es.\n\nCoro:\nClaman ángeles, [C]Sa [Em][D]–anto,\nClama la creación, [Bm]Sa [Em]–anto,\nExaltado [Am/E]Dios, Sa [Dsus4]–anto,\nSanto Por [G/D]Siempre.\n\nVerso 2:\n[G]Si te ha perdonado y [C]tienes [G]Salvación,\n[Em]Cántale al Cordero [D]que [C]Venció,\n[G]Si te ha Libertado, Su [C]nombre ha puesto en [G]ti,\n[Em]Cántale al Cordero [D]que venció, [C][Em]Cantaremos siempre [D][Am/E]¡Amén!.\n\nCoro:\nClaman ángeles…..\n\nPre-coro:\nTu nombre….\n\nCoro final:\nClaman ángeles…"
+  "letra": "Intro:\n[F] ([Am]) [G] [C/E] [Am] [G] [C]\n\nVerso 1:\n[C]Mil generaciones, a[F]doran a una [C]voz\nLe [Am]cantan al Cor[G]dero su can[C]ción\n[C]Y los que han creído y [F]los que han de cre[C]er\n[Am]Cantan al Cor[G]dero su can[F]ción\n\nPre-Coro:\nTu [F]nombre es más [Am]alto, [G]tu nombre es más grande\nTu [Am]nombre sobre todo es[F]tá\nSean [F]tronos, princi[Am]pados, [G]poderes y dominios\nTu [Am]nombre sobre todo es[Dm]tá\n\nCoro 1:\nCantan ánge[F]les: San[Am]to, [G]canta la crea[C/E]ción: San[Am]to\nExaltado es[Dm]tás, San[G]to, Santo por [C]siempre\n\nCoro 2:\nÓyenos can[F]tar: San[Am]to, [G]Rey de majes[C/E]tad, San[Am]to\nPor siempre serás [Dm]Santo, [G]Santo por [C]siempre\n\nVerso 2:\n[C]Si eres perdonado, y [F]Él te redi[C]mió\n[Am]Cántale al Cor[G]dero su can[F]ción\n[C]Si con Él caminas, [F]libre del te[C]mor\n[Am]Cántale al Cor[G]dero su can[F]ción, can[Am]temos al Cor[G]dero su can[F]ción",
+  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-21)",
+  "reemplaza": "2026-10-21-lacuerda-C"
  },
  {
   "titulo": "Gracia Sublime",
@@ -495,16 +500,5 @@
   "privada": true,
   "letra": "Intro:\nAm – Em – Am\nAm – G – F – C – Dm – Am – G – Am\nAm – G – F – C – G – Am – G – Am\n(Presentación Mario Rivera)\nAm – C – F – E ///\nAm – C – Em\n[Am]Dulces son, tus palabras [Dm]Dios\n[G]Como miel, [E]que alivia el [Am]corazón\n[Am]Es tu presencia la que anhelamos [Dm]hoy\n[G]Y contemplar el [E]santísimo [Am]lugar\n[F]Y es por gracia que [C]adoramos\n[G]Te exaltamos hoy [Am]señor\n[F]Y con canto de [C]alegría\n[G]Te alabamos oh [Am]Señor\n[Am]Todos reunidos cantaremos [F]al [C]Señor\n(G)\n[G]Con danzas de [Am]alegría y con cantos [G]de [Am]amor\n[Am]Juntos celebramos la venida [F]del [C]Señor\n(G)\n[G]Con danzas de [Am]alegría y con cantos [G]de [Am]amor\nInstrumental\nAm – F – C – G – Am – G – Am",
   "link": "https://www.youtube.com/watch?v=2AvQ7t-1_Zc"
- },
- {
-  "titulo": "Santo por Siempre (en C)",
-  "tono": "C",
-  "autor": "Chris Tomlin y otros (trad. Bernardo Aguilar, Hugo Chapa, Danny Díaz)",
-  "bpm": 72,
-  "categoria": "Vigilia",
-  "link": "https://www.youtube.com/watch?v=NZqEgIyWgUk",
-  "privada": true,
-  "letra": "Intro:\n[F] ([Am]) [G] [C/E] [Am] [G] [C]\n\nVerso 1:\n[C]Mil generaciones, a[F]doran a una [C]voz\nLe [Am]cantan al Cor[G]dero su can[C]ción\n[C]Y los que han creído y [F]los que han de cre[C]er\n[Am]Cantan al Cor[G]dero su can[F]ción\n\nPre-Coro:\nTu [F]nombre es más [Am]alto, [G]tu nombre es más grande\nTu [Am]nombre sobre todo es[F]tá\nSean [F]tronos, princi[Am]pados, [G]poderes y dominios\nTu [Am]nombre sobre todo es[Dm]tá\n\nCoro 1:\nCantan ánge[F]les: San[Am]to, [G]canta la crea[C/E]ción: San[Am]to\nExaltado es[Dm]tás, San[G]to, Santo por [C]siempre\n\nCoro 2:\nÓyenos can[F]tar: San[Am]to, [G]Rey de majes[C/E]tad, San[Am]to\nPor siempre serás [Dm]Santo, [G]Santo por [C]siempre\n\nVerso 2:\n[C]Si eres perdonado, y [F]Él te redi[C]mió\n[Am]Cántale al Cor[G]dero su can[F]ción\n[C]Si con Él caminas, [F]libre del te[C]mor\n[Am]Cántale al Cor[G]dero su can[F]ción, can[Am]temos al Cor[G]dero su can[F]ción",
-  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-21)"
  }
 ]

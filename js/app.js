@@ -503,7 +503,8 @@
 
   /* ---------- Importar alabanzas (líderes) ----------
      importar/canciones.json trae alabanzas transcritas para cargarlas de una vez con la cuenta del líder.
-     Solo se agregan las que todavía no existen (se compara por nombre). */
+     Solo se agregan las que todavía no existen (se compara por nombre). Una entrada con "reemplaza" (una marca de
+     versión) cambia la alabanza que ya existe con ese nombre, una sola vez: guarda la marca para no volver a pisarla. */
   let paraImportar = null;
   function pendientesImportar() {
     if (!puede("borrar")) return [];
@@ -513,16 +514,19 @@
         paraImportar = Array.isArray(l) ? l.filter((c) => c && c.titulo && c.letra) : []; render();
       }).catch(() => {});
     }
-    const hay = new Set(todas().map((c) => clave(c.titulo)));
-    return paraImportar.filter((c) => !hay.has(clave(c.titulo)));
+    const hay = new Map(todas().map((c) => [clave(c.titulo), c]));
+    return paraImportar.filter((c) => { const ya = hay.get(clave(c.titulo)); return !ya || (c.reemplaza && ya.reemplazo !== c.reemplaza); });
   }
   async function importarPendientes() {
     const lista = pendientesImportar();
-    if (!lista.length || !confirm(`¿Agregar ${lista.length} alabanzas al cancionero?\n\n${lista.map((c) => "• " + c.titulo).join("\n")}`)) return;
+    const existente = (c) => todas().find((x) => clave(x.titulo) === clave(c.titulo));
+    if (!lista.length || !confirm(`¿Agregar ${lista.length} alabanzas al cancionero?\n\n${lista.map((c) => (existente(c) ? "• Reemplazar: " : "• ") + c.titulo).join("\n")}`)) return;
     let n = 0;
     for (const c of lista) {
       const datos = { titulo: c.titulo, autor: c.autor || "", tono: c.tono || "", bpm: c.bpm || "", categoria: c.categoria || "", link: c.link || "", letra: c.letra, actualizado: Date.now() };
-      try { await guardarCancion(null, datos, !!c.privada); n++; } catch (err) { errorGuardar(err); break; }
+      if (c.reemplaza) datos.reemplazo = c.reemplaza;
+      const ya = existente(c);
+      try { await guardarCancion(ya ? ya.id : null, datos, !!c.privada); n++; } catch (err) { errorGuardar(err); break; }
     }
     render(); if (n) avisar(`${n} alabanzas agregadas.`);
   }
