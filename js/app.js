@@ -117,8 +117,11 @@
   // Cada instrumento tiene su colección (partituras_saxo, partituras_trompeta) y su lista acceso/<instrumento>:
   // el saxofonista no ve las de trompeta ni al revés. Solo el dueño sube partituras y cambia las listas.
   const duenoCorreo = String(MIN.dueno || "").toLowerCase();
-  const esDueno = () => !!S.fuente && (S.fuente.modo === "local"
-    || !!(S.fuente.cuenta && duenoCorreo && String(S.fuente.cuenta.correo || "").toLowerCase() === duenoCorreo));
+  const adminCorreo = String(MIN.admin || "").toLowerCase();
+  const esDueno = () => !!S.fuente && (S.fuente.modo === "local" || (() => {
+    const c = String((S.fuente.cuenta && S.fuente.cuenta.correo) || "").toLowerCase();
+    return !!c && (c === duenoCorreo || c === adminCorreo);
+  })());
   const INSTRUMENTOS = [{ id: "saxo", boton: "Saxofonista", nombre: "saxofón" }, { id: "trompeta", boton: "Trompetista", nombre: "trompeta" }];
   const instrumentosDe = (p) => (Array.isArray(p.instrumentos) && p.instrumentos.length ? p.instrumentos : ["saxo"]);
   const coleccionPart = (instr) => "partituras_" + instr;

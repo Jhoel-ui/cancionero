@@ -6,6 +6,7 @@
 
   // "prefijo": dónde viven sus datos en Firestore. Renovación se queda en la raíz, como siempre.
   // "dueno": su primer líder (el que arma la lista del equipo). Tiene que coincidir con firestore.rules.
+  // "admin": control total mientras Rodri enseña a usar la página (Renuevo lo sabe). Quitar aquí y en las reglas cuando ya no haga falta.
   const MINISTERIOS = {
     renovacion: {
       id: "renovacion", nombre: "Renovación", logo: "media/logo-renovacion.webp",
@@ -13,7 +14,7 @@
     },
     renuevo: {
       id: "renuevo", nombre: "Renuevo", logo: "media/logo-renuevo.webp",
-      prefijo: "ministerios/renuevo/", dueno: "jd.nivek123@gmail.com", colorBarra: "#f4f7fb",
+      prefijo: "ministerios/renuevo/", dueno: "jd.nivek123@gmail.com", admin: "rojasaire@gmail.com", colorBarra: "#f4f7fb",
     },
   };
   const SCRIPTS = ["js/config.js", "js/acordes.js", "js/datos.js", "js/app.js"];
