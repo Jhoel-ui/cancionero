@@ -1,4 +1,4 @@
-// Ministerio de Alabanza Renovación: sitio, cancionero y repertorios.
+// Cancionero de un ministerio de alabanza (Renovación o Renuevo, ver ministerio.js): alabanzas, repertorios y partituras.
 (function () {
   "use strict";
   const A = window.Acordes;
@@ -36,9 +36,11 @@
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 
-  /* ---------- Emblema del ministerio (hasta tener el archivo del logo) ---------- */
+  /* ---------- Logo del ministerio (el emblema dibujado queda de respaldo) ---------- */
+  const MIN = window.MINISTERIO || { id: "renovacion", nombre: "Renovación", dueno: "" };
   let nEmblema = 0;
   function emblema(tam, fondo) {
+    if (MIN.logo) return `<img class="logo-min" src="${MIN.logo}" width="${tam}" height="${tam}" alt="Logo del Ministerio de Alabanza ${MIN.nombre}">`;
     const n = ++nEmblema;
     return `<svg class="emblema" width="${tam}" height="${tam}" viewBox="0 0 200 200" role="img" aria-label="Emblema del Ministerio de Alabanza Renovación">
       <defs><path id="em-a${n}" d="M 30,100 A 70,70 0 0 1 170,100"/><path id="em-b${n}" d="M 18,100 A 82,82 0 0 0 182,100"/></defs>
@@ -114,12 +116,14 @@
   /* ---------- Partituras privadas ---------- */
   // Cada instrumento tiene su colección (partituras_saxo, partituras_trompeta) y su lista acceso/<instrumento>:
   // el saxofonista no ve las de trompeta ni al revés. Solo el dueño sube partituras y cambia las listas.
-  const duenoCorreo = String((window.CONFIG_FIREBASE || {}).dueno || "").toLowerCase();
+  const duenoCorreo = String(MIN.dueno || "").toLowerCase();
   const esDueno = () => !!S.fuente && (S.fuente.modo === "local"
     || !!(S.fuente.cuenta && duenoCorreo && String(S.fuente.cuenta.correo || "").toLowerCase() === duenoCorreo));
   const INSTRUMENTOS = [{ id: "saxo", boton: "Saxofonista", nombre: "saxofón" }, { id: "trompeta", boton: "Trompetista", nombre: "trompeta" }];
   const instrumentosDe = (p) => (Array.isArray(p.instrumentos) && p.instrumentos.length ? p.instrumentos : ["saxo"]);
   const coleccionPart = (instr) => "partituras_" + instr;
+  // Lo que se importa (alabanzas, repertorios, partituras) es de cada ministerio: Renovación usa importar/, los demás importar/<id>/.
+  const IMPORTAR = MIN.id === "renovacion" ? "importar/" : "importar/" + MIN.id + "/";
   // Botones de instrumento: cada quien ve solo los que puede leer; el dueño ve todos (aunque aún no tengan partituras).
   const instrumentosVisibles = () => INSTRUMENTOS.filter((i) => esDueno() || Object.values(S.partituras).some((p) => instrumentosDe(p).includes(i.id)));
   const conPartituras = () => instrumentosVisibles().length > 0;
@@ -240,7 +244,7 @@
     avisar("Subiendo partituras…");
     try {
       const llave = await crypto.subtle.importKey("raw", bytes(S.llave), "AES-GCM", false, ["decrypt"]);
-      const { piezas } = await (await fetch("importar/partituras.enc.json", { cache: "no-cache" })).json();
+      const { piezas } = await (await fetch(IMPORTAR + "partituras.enc.json", { cache: "no-cache" })).json();
       let n = 0;
       for (const p of piezas) {
         const plano = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes(p.iv) }, llave, bytes(p.datos));
@@ -510,7 +514,7 @@
     if (!puede("borrar")) return [];
     if (paraImportar === null) {
       paraImportar = [];
-      fetch("importar/canciones.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).then((l) => {
+      fetch(IMPORTAR + "canciones.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).then((l) => {
         paraImportar = Array.isArray(l) ? l.filter((c) => c && c.titulo && c.letra) : []; render();
       }).catch(() => {});
     }
@@ -555,7 +559,7 @@
     if (!puede("borrar")) return [];
     if (repsImportar === null) {
       repsImportar = [];
-      fetch("importar/repertorios.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).then((l) => {
+      fetch(IMPORTAR + "repertorios.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).then((l) => {
         repsImportar = Array.isArray(l) ? l.filter((r) => r && r.nombre && r.lista) : []; render();
       }).catch(() => {});
     }
@@ -884,6 +888,23 @@
     });
   }
 
+  /* ---------- Puerta: el cancionero es solo para el equipo de cada ministerio ---------- */
+  // Las reglas de Firestore no le dan nada a quien no está en la lista; aquí solo se explica qué hacer.
+  function vistaPuerta() {
+    const f = S.fuente;
+    if (!f || f.modo !== "firebase" || !f.cuentaLista || f.permisos.editar) return "";
+    const logo = MIN.logo ? `<img src="${MIN.logo}" alt="">` : "";
+    const cambiar = `<button class="cambiar-ministerio" type="button" data-accion="cambiar-ministerio">Cambiar de ministerio</button>`;
+    if (!f.cuenta) return `<section class="acceso-equipo">${logo}<h1>Cancionero de ${esc(MIN.nombre)}</h1>
+      <p>Es solo para el equipo del ministerio. Entra con tu cuenta de Google para ver las alabanzas y los repertorios.</p>
+      <button class="boton boton--principal" data-accion="entrar">${ic("entrar")} Entrar con Google</button>${cambiar}</section>`;
+    const sinLider = !duenoCorreo;
+    return `<section class="acceso-equipo">${logo}<h1>Cancionero de ${esc(MIN.nombre)}</h1>
+      <p>${sinLider ? `Este espacio todavía se está preparando. Cuando su líder lo active, podrá agregarte.`
+        : `<b>${esc(f.cuenta.correo)}</b> no está en el equipo de ${esc(MIN.nombre)}. Pide a su líder que te agregue y vuelve a entrar.`}</p>
+      <button class="boton" data-accion="salir">${ic("salir")} Usar otra cuenta</button>${cambiar}</section>`;
+  }
+
   /* ---------- Render ---------- */
   const SECCION = { inicio: "inicio", cancionero: "cancionero", repertorio: "repertorio", "rep-editar": "repertorio", elegir: "repertorio", editar: "cancionero" };
   function render() {
@@ -900,6 +921,9 @@
     if (S.vista === "equipo" && document.getElementById("form-equipo") && document.activeElement && document.activeElement.form) return;
     const foco = document.activeElement && document.activeElement.id;
     const cursor = foco && document.activeElement.selectionStart;
+    const puerta = vistaPuerta();
+    document.body.classList.toggle("en-puerta", !!puerta);
+    if (puerta) { app.innerHTML = puerta; document.getElementById("pasador").innerHTML = ""; return; }
     app.innerHTML = { inicio: vistaInicio, cancionero: vistaCancionero, repertorio: vistaRepertorio, "rep-editar": vistaRepEditar, elegir: vistaElegir, cancion: vistaCancion, editar: vistaEditar, equipo: vistaEquipo }[S.vista]();
     const pas = pasadorHTML();
     document.getElementById("pasador").innerHTML = pas;
@@ -1178,6 +1202,12 @@
     const d = b.dataset;
     const items = ((rep(S.rep) || {}).items || []).slice();
 
+    if (d.accion === "cambiar-ministerio") return window.cambiarMinisterio();
+    if (d.accion === "entrar" || d.accion === "salir") {
+      try { if (d.accion === "entrar") await S.fuente.entrar(); else await S.fuente.salir(); }
+      catch (_) { avisar("No se pudo iniciar sesión. Inténtalo de nuevo.", true); }
+      return;
+    }
     if (d.rep) { S.rep = d.rep; S.ordenando = false; return irA("repertorio"); }
     if (d.cat !== undefined) { S.categoria = d.cat; if (S.vista !== "cancionero") return irA("cancionero"); return render(); }
     if (d.modoBtn) { if (d.modoBtn === "presentacion") { S.modo = "presentacion"; pintarPresentacion(); } return; }
@@ -1334,7 +1364,25 @@
     const llegaron = new Set();
     const llego = (k) => { llegaron.add(k); if (llegaron.size === 2) S.cargado = true; render(); };
     const fallo = () => { S.sinConexion = true; S.cargado = true; render(); };
-    fuente.escuchar("canciones", (datos) => { S.publicas = datos; unirCanciones(); llego("canciones"); }, fallo);
+    // Las alabanzas y repertorios son solo del equipo: se escuchan cuando entra un miembro y se sueltan al salir.
+    let dejarDatos = [];
+    const verDatos = () => {
+      const miembro = fuente.modo !== "firebase" || !!(fuente.permisos && fuente.permisos.editar);
+      if (miembro && !dejarDatos.length) {
+        dejarDatos = [
+          fuente.escuchar("canciones", (datos) => { S.publicas = datos; unirCanciones(); llego("canciones"); }, fallo),
+          fuente.escuchar("repertorios", (datos) => {
+            const r = {};
+            for (const [id, x] of Object.entries(datos)) r[id] = leerRepertorio(id, x);
+            S.repertorios = r; llego("repertorios");
+          }, fallo),
+        ];
+      } else if (!miembro && dejarDatos.length) {
+        dejarDatos.forEach((f) => f && f()); dejarDatos = []; llegaron.clear();
+        S.publicas = {}; S.repertorios = {}; S.cargado = false; unirCanciones();
+      }
+    };
+    verDatos();
     // Las de "solo equipo" se cargan cuando entra alguien del equipo y se quitan al salir.
     let dejarPrivadas = null;
     const verPrivadas = () => {
@@ -1364,12 +1412,7 @@
       if (esDueno()) dejar.push(fuente.escuchar("acceso", (datos) => { S.acceso = datos; render(); }, () => {}));
     };
     verPartituras();
-    if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => { verPrivadas(); verPartituras(); render(); });
-    fuente.escuchar("repertorios", (datos) => {
-      const r = {};
-      for (const [id, x] of Object.entries(datos)) r[id] = leerRepertorio(id, x);
-      S.repertorios = r; llego("repertorios");
-    }, fallo);
+    if (fuente.alCambiarCuenta) fuente.alCambiarCuenta(() => { verDatos(); verPrivadas(); verPartituras(); render(); });
   })();
 
   if ("serviceWorker" in navigator && location.protocol === "https:" && !window.claude) {

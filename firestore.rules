@@ -1,37 +1,38 @@
 rules_version = '2';
-// Cualquiera con el link puede ver (menos las alabanzas "solo equipo"). Editar: miembros del equipo con su cuenta de Google.
-// Borrar alabanzas y cambiar el equipo: solo líderes. La lista está en config/equipo:
+// Dos ministerios en la misma página, cada uno con lo suyo. Nadie de un ministerio puede leer ni tocar lo del otro.
+//  - Renovación: colecciones en la raíz (canciones, repertorios, partituras_…, acceso, config/equipo).
+//  - Renuevo: lo mismo, dentro de ministerios/renuevo/…
+// Todo es solo para el equipo de cada uno (hay que entrar con Google y estar en su lista config/equipo):
 //   { miembros: ["correo@gmail.com", ...], lideres: ["correo@gmail.com", ...] }
-// El dueño siempre es líder (así puede crear la lista desde la página, en "Equipo").
+// Editar: miembros. Borrar alabanzas y cambiar el equipo: líderes. El dueño de cada ministerio siempre es líder.
+// Partituras: cada instrumento tiene su lista acceso/<instrumento> { permitidos: [...] }; solo el dueño sube y cambia listas.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function correo() { return request.auth.token.email.lower(); }
+    function conCuenta() { return request.auth != null; }
+
+    // ---------- Renovación ----------
     function rutaEquipo() { return /databases/$(database)/documents/config/equipo; }
     function equipo() { return get(rutaEquipo()).data; }
-    function correo() { return request.auth.token.email.lower(); }
-    function dueno() { return request.auth != null && correo() == "rojasaire@gmail.com"; }
-    function lider() { return dueno() || (request.auth != null && exists(rutaEquipo()) && correo() in equipo().lideres); }
-    function miembro() { return lider() || (request.auth != null && exists(rutaEquipo()) && correo() in equipo().miembros); }
+    function dueno() { return conCuenta() && correo() == "rojasaire@gmail.com"; }
+    function lider() { return dueno() || (conCuenta() && exists(rutaEquipo()) && correo() in equipo().lideres); }
+    function miembro() { return lider() || (conCuenta() && exists(rutaEquipo()) && correo() in equipo().miembros); }
+    function ve(instr) {
+      return dueno() || (conCuenta()
+        && exists(/databases/$(database)/documents/acceso/$(instr))
+        && correo() in get(/databases/$(database)/documents/acceso/$(instr)).data.permitidos);
+    }
 
     match /canciones/{id} {
-      allow read: if true;
-      allow create, update: if miembro();
+      allow read, create, update: if miembro();
       allow delete: if lider();
     }
-    // Alabanzas "solo equipo" (de otros artistas): no se ven en la página pública.
     match /canciones_equipo/{id} {
       allow read, create, update: if miembro();
       allow delete: if lider();
     }
-    match /repertorios/{fecha} {
-      allow read: if true;
-      allow write: if miembro();
-    }
-    // Partituras privadas por instrumento: cada colección la leen solo el dueño y los correos de su lista
-    // acceso/<instrumento> { permitidos: [...] }. El saxofonista no ve las de trompeta ni al revés.
-    function ve(instr) {
-      return dueno() || (request.auth != null
-        && exists(/databases/$(database)/documents/acceso/$(instr))
-        && correo() in get(/databases/$(database)/documents/acceso/$(instr)).data.permitidos);
+    match /repertorios/{id} {
+      allow read, write: if miembro();
     }
     match /partituras_saxo/{id} {
       allow read: if ve("saxo");
@@ -49,8 +50,51 @@ service cloud.firestore {
       allow read, write: if dueno();
     }
     match /config/{doc} {
-      allow read: if request.auth != null;
+      allow read: if miembro();
       allow write: if lider();
     }
+
+    // ---------- Renuevo ----------
+    function rRutaEquipo() { return /databases/$(database)/documents/ministerios/renuevo/config/equipo; }
+    function rEquipo() { return get(rRutaEquipo()).data; }
+    function rDueno() { return conCuenta() && correo() == "jd.nivek123@gmail.com"; }
+    function rLider() { return rDueno() || (conCuenta() && exists(rRutaEquipo()) && correo() in rEquipo().lideres); }
+    function rMiembro() { return rLider() || (conCuenta() && exists(rRutaEquipo()) && correo() in rEquipo().miembros); }
+    function rVe(instr) {
+      return rDueno() || (conCuenta()
+        && exists(/databases/$(database)/documents/ministerios/renuevo/acceso/$(instr))
+        && correo() in get(/databases/$(database)/documents/ministerios/renuevo/acceso/$(instr)).data.permitidos);
+    }
+
+    match /ministerios/renuevo/canciones/{id} {
+      allow read, create, update: if rMiembro();
+      allow delete: if rLider();
+    }
+    match /ministerios/renuevo/canciones_equipo/{id} {
+      allow read, create, update: if rMiembro();
+      allow delete: if rLider();
+    }
+    match /ministerios/renuevo/repertorios/{id} {
+      allow read, write: if rMiembro();
+    }
+    match /ministerios/renuevo/partituras_saxo/{id} {
+      allow read: if rVe("saxo");
+      allow write: if rDueno();
+    }
+    match /ministerios/renuevo/partituras_trompeta/{id} {
+      allow read: if rVe("trompeta");
+      allow write: if rDueno();
+    }
+    match /ministerios/renuevo/partituras/{id} {
+      allow read, write: if rDueno();
+    }
+    match /ministerios/renuevo/acceso/{doc} {
+      allow read, write: if rDueno();
+    }
+    match /ministerios/renuevo/config/{doc} {
+      allow read: if rMiembro();
+      allow write: if rLider();
+    }
+    // Cualquier otra cosa: cerrada.
   }
 }

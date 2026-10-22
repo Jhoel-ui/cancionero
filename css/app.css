@@ -418,3 +418,66 @@ body.sin-scroll { overflow: hidden; }
 .adelanto__sin { font-size: .875rem; color: var(--tinta-2); }
 .visor .adelanto { background: rgb(255 255 255 / .06); border-color: rgb(255 255 255 / .25); color: var(--tinta-inv); }
 .visor .adelanto__cab span { color: #d9bf86; }
+
+/* ---------- Portada de la iglesia: el video y los dos ministerios ---------- */
+.puerta { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #0d0f14; transition: opacity .3s var(--ease-out); }
+.puerta--sale { opacity: 0; pointer-events: none; }
+.puerta__marco { position: relative; aspect-ratio: 9 / 16; height: min(100dvh, calc(100vw * 16 / 9)); cursor: pointer; container-type: inline-size; }
+.puerta__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.puerta--quieta .puerta__video { visibility: hidden; }
+.puerta--quieta .puerta__marco { background: url("../media/portada.jpg") center / cover; }
+/* Los medallones del video quedan tapados por los logos reales, en el mismo lugar. */
+.puerta__min { position: absolute; width: 34.7%; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
+  opacity: 0; transform: scale(.94); pointer-events: none; transition: opacity .6s var(--ease-out), transform .6s var(--ease-out); -webkit-tap-highlight-color: transparent; }
+.puerta__min img { width: 100%; height: 100%; display: block; border-radius: 50%; }
+.puerta__min span { position: absolute; left: 50%; top: calc(100% + 3.5cqi); transform: translateX(-50%); white-space: nowrap;
+  font: 700 5.4cqi/1 var(--f-titulo); color: #f4ecdf; letter-spacing: .02em; text-shadow: 0 2px 8px rgb(0 0 0 / .6); }
+.puerta__min--renovacion { left: 9.7%; top: 62.9%; box-shadow: 0 0 0 2px #c9a24a, 0 0 7cqi rgb(201 162 74 / .45); }
+.puerta__min--renuevo { left: 55.6%; top: 64.1%; box-shadow: 0 0 0 2px #4c8dff, 0 0 7cqi rgb(76 141 255 / .45); }
+.puerta--lista .puerta__min { opacity: 1; transform: none; pointer-events: auto; }
+/* Los dos nombres a la misma altura aunque los medallones del video no lo estén del todo. */
+.puerta__min--renuevo span { top: calc(100% + 3.5cqi - 2.13cqi); }
+.puerta__min:active { transform: scale(.97); transition-duration: .12s; }
+.puerta__min:focus-visible { outline: 3px solid #f4ecdf; outline-offset: 4px; }
+.puerta__saltar { position: absolute; left: 0; right: 0; bottom: 3%; margin: 0; text-align: center; font: 500 3.6cqi/1 var(--f-ui); color: rgb(244 236 223 / .55); transition: opacity .3s; }
+.puerta--lista .puerta__saltar { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .puerta__min { transition: none; } }
+
+/* Pantalla para quien no es del equipo (las alabanzas son solo para cada ministerio). */
+.acceso-equipo { display: grid; justify-items: center; text-align: center; gap: 16px; padding: 56px 0 72px; max-width: 30rem; margin: 0 auto; }
+.acceso-equipo img { width: 148px; height: 148px; border-radius: 50%; box-shadow: var(--sombra-2); }
+.acceso-equipo h1 { margin: 8px 0 0; font: 700 1.75rem/1.2 var(--f-titulo); }
+.acceso-equipo p { margin: 0; color: var(--tinta-2); }
+.logo-min { display: block; flex: none; border-radius: 50%; }
+.cambiar-ministerio { background: none; border: 0; padding: 8px 0; font: inherit; font-size: .875rem; color: inherit; text-decoration: underline; cursor: pointer; opacity: .8; }
+
+/* ---------- Renuevo: sus colores (azul de su logo) ---------- */
+:root[data-ministerio="renuevo"] {
+  --arena: #e3e9f2;
+  --crema: #f4f7fb;
+  --arena-2: #d5deeb;
+  --arena-3: #c2cee0;
+  --linea: #cfd9e7;
+  --cafe: #1b2a4a;
+  --cafe-2: #2c4572;
+  --cafe-osc: #111b30;
+  --tinta: #16213a;
+  --tinta-2: #4e5d78;
+  --tinta-inv: #e9eef7;
+  --acorde: #2a5aa8;
+  --seccion: #3d6fb6;
+  --sombra-1: 0 1px 2px rgb(20 35 65 / .06), 0 2px 8px rgb(20 35 65 / .06);
+  --sombra-2: 0 2px 4px rgb(20 35 65 / .06), 0 12px 32px rgb(20 35 65 / .12);
+}
+:root[data-ministerio="renuevo"] .portada__foto--sin {
+  background:
+    radial-gradient(60% 80% at 78% 18%, rgb(150 190 255 / .45), transparent 60%),
+    radial-gradient(40% 60% at 22% 10%, rgb(120 170 255 / .28), transparent 60%),
+    radial-gradient(80% 70% at 50% 120%, rgb(6 10 22 / .9), transparent 70%),
+    linear-gradient(180deg, #2c4572, #111b30);
+}
+:root[data-ministerio="renuevo"] .portada::after { background: linear-gradient(90deg, rgb(12 20 38 / .78) 0%, rgb(12 20 38 / .45) 55%, rgb(12 20 38 / .15) 100%); }
+:root[data-ministerio="renuevo"] .presentacion .seg .ch { color: #9cc3ff; }
+:root[data-ministerio="renuevo"] .presentacion .parte,
+:root[data-ministerio="renuevo"] .visor__hojas h2,
+:root[data-ministerio="renuevo"] .visor .adelanto__cab span { color: #a9c4ee; }
