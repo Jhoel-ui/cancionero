@@ -89,6 +89,7 @@
       async descargar(nombre, blob) { descargaNavegador(nombre, blob); },
     };
     const dueno = String(M().dueno || "").toLowerCase();
+    const admin = String(M().admin || "").toLowerCase();
     fuente.equipo = { lideres: [], miembros: [] };
     fuente.guardarEquipo = async (eq) => { await fs.setDoc(fs.doc(db, ruta("config"), "equipo"), eq); fuente.equipo = eq; };
     au.onAuthStateChanged(auth, async (u) => {
@@ -102,7 +103,7 @@
         try { const snap = await fs.getDoc(fs.doc(db, ruta("config"), "equipo")); if (snap.exists()) eq = snap.data(); } catch (_) {}
         fuente.equipo = { lideres: eq.lideres || [], miembros: eq.miembros || [] };
         const en = (lista) => lista.map((x) => String(x).toLowerCase()).includes(correo);
-        const lider = (dueno && correo === dueno) || en(fuente.equipo.lideres);
+        const lider = (dueno && correo === dueno) || (admin && correo === admin) || en(fuente.equipo.lideres);
         fuente.permisos = { editar: lider || en(fuente.equipo.miembros), borrar: lider };
       }
       fuente.cuentaLista = true;
