@@ -1,4 +1,6 @@
 // Capa de datos: el mismo cancionero funciona con tres fuentes.
+// Cada ministerio guarda lo suyo aparte: sus colecciones van con el prefijo de window.MINISTERIO
+// (Renovación en la raíz; Renuevo en ministerios/renuevo/…).
 //  - "firebase": la página web publicada (datos en tiempo real y sin señal).
 //  - "claude": la vista previa en claude.ai.
 //  - "local": modo de prueba, guarda solo en este teléfono.
@@ -6,6 +8,9 @@
   "use strict";
 
   const FIREBASE_VERSION = "10.12.2";
+
+  const M = () => global.MINISTERIO || { prefijo: "", dueno: "", id: "renovacion" };
+  const ruta = (coleccion) => M().prefijo + coleccion;
 
   function nuevoId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -26,18 +31,18 @@
       permisos: { editar, borrar: editar && borrar },
       cuenta: null,
       escuchar(coleccion, cb, error) {
-        return db.collection(coleccion).onSnapshot((snap) => {
+        return db.collection(ruta(coleccion)).onSnapshot((snap) => {
           const datos = {};
           snap.docs.forEach((d) => { datos[d.id] = d.data(); });
           cb(datos);
         }, error);
       },
       async guardar(coleccion, id, datos) {
-        const ref = id ? db.doc(coleccion + "/" + id) : db.collection(coleccion).doc();
+        const ref = id ? db.doc(ruta(coleccion) + "/" + id) : db.collection(ruta(coleccion)).doc();
         await ref.set(datos);
         return ref.id;
       },
-      borrar: (coleccion, id) => db.doc(coleccion + "/" + id).delete(),
+      borrar: (coleccion, id) => db.doc(ruta(coleccion) + "/" + id).delete(),
       async descargar(nombre, blob) {
         if (!downloads) throw { code: "unavailable" };
         await downloads.save({ filename: nombre, data: blob });
@@ -67,39 +72,40 @@
       cuenta: null,
       alCambiarCuenta(fn) { oyentes.add(fn); },
       escuchar(coleccion, cb, error) {
-        return fs.onSnapshot(fs.collection(db, coleccion), (snap) => {
+        return fs.onSnapshot(fs.collection(db, ruta(coleccion)), (snap) => {
           const datos = {};
           snap.docs.forEach((d) => { datos[d.id] = d.data(); });
           cb(datos);
         }, error);
       },
       async guardar(coleccion, id, datos) {
-        const ref = id ? fs.doc(db, coleccion, id) : fs.doc(fs.collection(db, coleccion));
+        const ref = id ? fs.doc(db, ruta(coleccion), id) : fs.doc(fs.collection(db, ruta(coleccion)));
         await fs.setDoc(ref, datos);
         return ref.id;
       },
-      borrar: (coleccion, id) => fs.deleteDoc(fs.doc(db, coleccion, id)),
+      borrar: (coleccion, id) => fs.deleteDoc(fs.doc(db, ruta(coleccion), id)),
       async entrar() { await au.signInWithPopup(auth, new au.GoogleAuthProvider()); },
       async salir() { await au.signOut(auth); },
       async descargar(nombre, blob) { descargaNavegador(nombre, blob); },
     };
-    const dueno = String(window.CONFIG_FIREBASE.dueno || "").toLowerCase();
+    const dueno = String(M().dueno || "").toLowerCase();
     fuente.equipo = { lideres: [], miembros: [] };
-    fuente.guardarEquipo = async (eq) => { await fs.setDoc(fs.doc(db, "config", "equipo"), eq); fuente.equipo = eq; };
+    fuente.guardarEquipo = async (eq) => { await fs.setDoc(fs.doc(db, ruta("config"), "equipo"), eq); fuente.equipo = eq; };
     au.onAuthStateChanged(auth, async (u) => {
       fuente.cuenta = u ? { nombre: u.displayName || u.email, correo: u.email } : null;
       fuente.permisos = { editar: false, borrar: false };
       if (u) {
-        // Lista de miembros y líderes en config/equipo: { miembros: [correos], lideres: [correos] }.
-        // El dueño (config.js) siempre es líder, así puede crear la lista desde la página.
+        // Lista de miembros y líderes en config/equipo del ministerio: { miembros: [correos], lideres: [correos] }.
+        // El dueño (ministerio.js) siempre es líder, así puede crear la lista desde la página.
         const correo = (u.email || "").toLowerCase();
         let eq = {};
-        try { const snap = await fs.getDoc(fs.doc(db, "config", "equipo")); if (snap.exists()) eq = snap.data(); } catch (_) {}
+        try { const snap = await fs.getDoc(fs.doc(db, ruta("config"), "equipo")); if (snap.exists()) eq = snap.data(); } catch (_) {}
         fuente.equipo = { lideres: eq.lideres || [], miembros: eq.miembros || [] };
         const en = (lista) => lista.map((x) => String(x).toLowerCase()).includes(correo);
         const lider = (dueno && correo === dueno) || en(fuente.equipo.lideres);
         fuente.permisos = { editar: lider || en(fuente.equipo.miembros), borrar: lider };
       }
+      fuente.cuentaLista = true;
       oyentes.forEach((fn) => fn());
     });
     return fuente;
@@ -107,7 +113,7 @@
 
   // ---------- Modo de prueba (solo este teléfono) ----------
   function fuenteLocal() {
-    const CLAVE = "cancionero-renovacion-prueba";
+    const CLAVE = "cancionero-" + M().id + "-prueba";
     let todo = {};
     try { todo = JSON.parse(localStorage.getItem(CLAVE) || "{}"); } catch (_) {}
     const oyentes = {};

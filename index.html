@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<title>Cancionero Renovación</title>
-<meta name="description" content="Alabanzas con acordes y repertorios del Ministerio de Alabanza Renovación, Alto Ballivián.">
+<title>Cancionero · Iglesia Alto Ballivián</title>
+<meta name="description" content="Alabanzas con acordes y repertorios de los ministerios de alabanza de la iglesia Alto Ballivián.">
 <meta name="theme-color" content="#f7f1e6">
 <meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,12 +13,11 @@
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-<script src="js/intro.js"></script>
 <header class="cabecera">
   <div class="envoltura cabecera__fila">
-    <a class="marca" href="#inicio" data-nav="inicio" aria-label="Renovación, inicio">
+    <a class="marca" href="#inicio" data-nav="inicio" aria-label="Inicio">
       <span data-emblema="52"></span>
-      <span class="marca__texto"><small>Ministerio de Alabanza</small><b>Renovación</b></span>
+      <span class="marca__texto"><small>Ministerio de Alabanza</small><b data-ministerio-nombre></b></span>
     </a>
     <nav class="menu" aria-label="Secciones">
       <a href="#inicio" data-nav="inicio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>Inicio</a>
@@ -36,7 +35,8 @@
   <div class="envoltura">
     <div class="pie__marca">
       <span data-emblema="56" data-fondo="var(--cafe-osc)"></span>
-      <div><b>Ministerio de Alabanza Renovación</b><span>Alto Ballivián</span></div>
+      <div><b data-ministerio-titulo>Ministerio de Alabanza</b><span>Alto Ballivián</span>
+        <button class="cambiar-ministerio" type="button" onclick="cambiarMinisterio()">Cambiar de ministerio</button></div>
     </div>
     <blockquote>Servid a Jehová con alegría; venid ante su presencia con regocijo.<cite>Salmos 100:2</cite></blockquote>
   </div>
@@ -52,9 +52,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="js/vendor/Sortable.min.js" defer></script>
-<script src="js/config.js"></script>
-<script src="js/acordes.js"></script>
-<script src="js/datos.js"></script>
-<script src="js/app.js"></script>
+<script src="js/ministerio.js"></script>
 </body>
 </html>
