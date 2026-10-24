@@ -283,7 +283,7 @@
   const idsDe = (rid) => [...new Set(cancionesDe(rid).map(enlazada).filter(Boolean))];
   const cuantas = (n) => (n ? n + (n === 1 ? " alabanza" : " alabanzas") : "sin alabanzas");
   function leerRepertorio(id, x) {
-    if (Array.isArray(x.items)) return { id, nombre: x.nombre || "Repertorio", fecha: x.fecha || "", items: x.items };
+    if (Array.isArray(x.items)) return { id, nombre: x.nombre || "Repertorio", fecha: x.fecha || "", items: x.items, importado: x.importado || 0 };
     const f = esFecha(x.fecha) ? x.fecha : esFecha(id) ? id : "";
     return { id, nombre: f ? nombreDia(f) : "Repertorio", fecha: f, items: (x.canciones || []).map((cid) => ({ titulo: "", tono: "", id: cid })) };
   }
@@ -398,7 +398,7 @@
     : { bloque: it.bloque || "" };
   async function guardarRepertorio(rid, datos) {
     const r = Object.assign({}, rep(rid) || {}, datos);
-    const doc = { nombre: r.nombre || "Repertorio", fecha: r.fecha || "", items: (r.items || []).map(limpio), actualizado: Date.now() };
+    const doc = { nombre: r.nombre || "Repertorio", fecha: r.fecha || "", items: (r.items || []).map(limpio), importado: r.importado || 0, actualizado: Date.now() };
     const id = await S.fuente.guardar("repertorios", rid || null, doc);
     S.repertorios[id] = leerRepertorio(id, doc);
     return id;
@@ -556,7 +556,8 @@
   }
 
   /* importar/repertorios.json: [{ nombre, fecha, lista }] con la lista escrita como en WhatsApp.
-     Se agrega si no hay otro con el mismo nombre y fecha; si en esa fecha hay uno vacío, se llena ese. */
+     Se agrega si no hay otro con el mismo nombre y fecha; si en esa fecha hay uno vacío, se llena ese.
+     Con "version" mayor a la importada, el mismo repertorio se vuelve a cargar con la lista corregida. */
   let repsImportar = null;
   function repsPendientes() {
     if (!puede("borrar")) return [];
@@ -566,15 +567,15 @@
         repsImportar = Array.isArray(l) ? l.filter((r) => r && r.nombre && r.lista) : []; render();
       }).catch(() => {});
     }
-    const hay = Object.values(S.repertorios);
-    return repsImportar.filter((n) => !hay.some((r) => clave(r.nombre) === clave(n.nombre) && r.fecha === (n.fecha || "")));
+    return repsImportar.filter((n) => { const r = mismoRep(n); return !r || (r.importado || 0) < (n.version || 0); });
   }
+  const mismoRep = (n) => Object.values(S.repertorios).find((r) => clave(r.nombre) === clave(n.nombre) && r.fecha === (n.fecha || ""));
   async function importarRepertorios() {
     const lista = repsPendientes();
     if (!lista.length || !confirm(`¿Agregar ${lista.map((r) => "“" + r.nombre + "”").join(", ")} a los repertorios?`)) return;
     for (const n of lista) {
-      const vacio = Object.values(S.repertorios).find((r) => r.fecha === (n.fecha || "") && !(r.items || []).length);
-      try { await guardarRepertorio(vacio ? vacio.id : null, { nombre: n.nombre, fecha: n.fecha || "", items: leerLista(n.lista).items }); }
+      const destino = mismoRep(n) || Object.values(S.repertorios).find((r) => r.fecha === (n.fecha || "") && !(r.items || []).length);
+      try { await guardarRepertorio(destino ? destino.id : null, { nombre: n.nombre, fecha: n.fecha || "", items: leerLista(n.lista).items, importado: n.version || 0 }); }
       catch (err) { errorGuardar(err); break; }
     }
     render(); avisar("Repertorio agregado.");
