@@ -89,7 +89,8 @@
       <div class="sacar__medio">${R.video ? `<div id="sacar-yt"></div>` : `<audio id="sacar-audio" controls preload="auto" src="${archivoUrl}"></audio>`}</div>
       <dl class="sacar__datos">
         <div><dt>Tono</dt><dd>${esc(R.tono || "—")}</dd></div>
-        <div><dt>Tempo</dt><dd>${R.bpm ? R.bpm + " <small>BPM</small>" : "—"}</dd></div>
+        <div class="sacar__tempo"><dt>Tempo</dt><dd><span id="sacar-bpm">${R.bpm ? R.bpm + " <small>BPM</small>" : "—"}</span>
+          ${R.bpm ? `<span class="sacar__bpm-ajuste" aria-label="Ajustar tempo"><button type="button" class="chip" data-bpm="0.5" aria-label="La mitad">½</button><button type="button" class="chip" data-bpm="2" aria-label="El doble">×2</button></span>` : ""}</dd></div>
         <div><dt>Acordes</dt><dd>${cambios}</dd></div>
       </dl>
       <p class="ayuda">Dale play y sigue el acorde marcado. Toca un acorde para escuchar desde ahí y corregirlo; los que corrijas quedan marcados con un punto.</p>
@@ -251,6 +252,12 @@
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.tramo !== undefined) { const i = +b.dataset.tramo; irAl(R.acordes[i].ini); return abrirCorrector(i); }
     if (b.dataset.poner !== undefined) return poner(elegido, b.dataset.poner);
+    // En las lentas el pulso a veces sale al doble (o al revés en las rápidas): se corrige con un toque.
+    if (b.dataset.bpm) {
+      R.bpm = Math.round(R.bpm * +b.dataset.bpm);
+      raiz.querySelector("#sacar-bpm").innerHTML = R.bpm + " <small>BPM</small>";
+      return guardarPronto();
+    }
     switch (b.dataset.sacar) {
       case "volver": return ctx.volver();
       case "cerrar": { const v = elegido; elegido = -1; repintarTramo(v); raiz.querySelector("#corrector").innerHTML = ""; return; }

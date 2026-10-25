@@ -530,3 +530,6 @@ body.sin-scroll { overflow: hidden; }
   .corrector { position: sticky; bottom: calc(var(--barra) + 8px + env(safe-area-inset-bottom, 0px)); z-index: 5; box-shadow: var(--sombra-2); }
 }
 .sacar__nota { font-size: .875rem; }
+.sacar__tempo dd { display: flex; align-items: center; gap: 8px; }
+.sacar__bpm-ajuste { display: inline-flex; gap: 4px; }
+.sacar__bpm-ajuste .chip { padding: 4px 9px; min-height: 30px; color: var(--cafe); }
