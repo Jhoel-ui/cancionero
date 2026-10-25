@@ -1,4 +1,4 @@
-# Analizador de acordes del Cancionero. Pensado para un Space gratis de Hugging Face (Docker, puerto 7860).
+# Analizador de acordes del Cancionero. Sirve en Google Cloud Run (usa $PORT) o en cualquier servidor con Docker.
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg git build-essential curl unzip ca-certificates \
@@ -16,4 +16,4 @@ USER usuario
 # Carga los modelos una vez al armar la imagen, así el primer pedido no espera.
 RUN python -c "import analizar"
 EXPOSE 7860
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-7860}

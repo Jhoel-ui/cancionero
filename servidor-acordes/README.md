@@ -14,12 +14,15 @@ Recibe un link de YouTube (o un archivo de audio) y devuelve los acordes con su 
 Usa los modelos ya entrenados de [madmom](https://github.com/CPJKU/madmom) (Universidad de Linz; uso sin fines de lucro).
 No guarda audio. Solo atiende a quien entra al Cancionero con su cuenta (token de Firebase).
 
-## Publicarlo gratis (una sola vez)
-1. Crea una cuenta en https://huggingface.co (gratis, sin tarjeta).
-2. New Space → nombre `acordes-cancionero`, SDK **Docker**, plantilla en blanco, hardware **CPU basic (free)**, público.
-3. Sube los archivos de esta carpeta (`Dockerfile`, `README.md`, `requirements.txt`, `app.py`, `analizar.py`) en Files → Add file → Upload files.
-4. Espera a que diga **Running** (la primera vez tarda unos 10 minutos).
-5. La dirección queda como `https://<usuario>-acordes-cancionero.hf.space`. Ponla en `js/config.js` del Cancionero (`ANALIZADOR`).
+## Publicarlo en Google Cloud Run (una sola vez)
+Va en el mismo proyecto de Firebase (`cancionero-renovacion`), con el plan Blaze. El uso gratis de Cloud Run alcanza para unas 2000 canciones al mes.
+1. Firebase → Uso y facturación → cambiar al plan **Blaze**, y en Google Cloud → Facturación → Presupuestos, una alerta de 1 USD.
+2. https://console.cloud.google.com/run?project=cancionero-renovacion → **Implementar contenedor → Servicio** → **Implementar de forma continua desde un repositorio** → **Configurar con Cloud Build**: GitHub `Jhoel-ui/cancionero`, rama `^main$`, tipo **Dockerfile**, ubicación `/servidor-acordes/Dockerfile`.
+3. Nombre `acordes-cancionero`, región `us-central1`, **Permitir acceso público** (la página igual exige el token de Firebase).
+4. Contenedor: memoria **2 GiB**, CPU **2**, tiempo de espera **600** s, instancias mínimas **0**, máximas **2**. Crear.
+5. La dirección queda `https://acordes-cancionero-497130298106.us-central1.run.app`, que ya está en `js/config.js`.
+
+Cada cambio en `servidor-acordes/` que llegue a `main` se vuelve a publicar solo.
 
 ## Variables (Settings → Variables and secrets), todas opcionales
 - `FIREBASE_PROYECTO`: por defecto `cancionero-renovacion`.
@@ -27,7 +30,7 @@ No guarda audio. Solo atiende a quien entra al Cancionero con su cuenta (token d
 - `MAX_MINUTOS`: largo máximo del video, por defecto 12.
 - `YT_COOKIES` (secreto): solo si YouTube empieza a responder "confirma que no eres un robot". Es el contenido de un `cookies.txt` de una cuenta de Google aparte (no la personal).
 
-El Space gratis se duerme tras 48 horas sin uso; el primer pedido después lo despierta (tarda un minuto).
+Sin uso se apaga solo (no cobra); el primer pedido lo despierta en unos segundos.
 
 ## Probar en la compu
 ```
