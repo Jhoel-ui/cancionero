@@ -9,3 +9,5 @@ window.CONFIG_FIREBASE = {
   appId: "1:497130298106:web:927d79d4e707f4a7400743",
   dueno: "rojasaire@gmail.com",
 };
+// Analizador de acordes (servidor-acordes/). Por ahora corre en la PC de la iglesia con un túnel de ngrok; luego irá a Google Cloud Run. Vacío = "Sacar acordes" avisa que aún no está.
+window.ANALIZADOR_ACORDES = "https://breach-crabbing-trapping.ngrok-free.dev";

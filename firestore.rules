@@ -1,6 +1,6 @@
 rules_version = '2';
 // Dos ministerios en la misma página, cada uno con lo suyo. Nadie de un ministerio puede leer ni tocar lo del otro.
-//  - Renovación: colecciones en la raíz (canciones, repertorios, partituras_…, acceso, config/equipo).
+//  - Renovación: colecciones en la raíz (canciones, repertorios, partituras_…, acceso, analisis, config/equipo).
 //  - Renuevo: lo mismo, dentro de ministerios/renuevo/…
 // Todo es solo para el equipo de cada uno (hay que entrar con Google y estar en su lista config/equipo):
 //   { miembros: ["correo@gmail.com", ...], lideres: ["correo@gmail.com", ...] }
@@ -49,6 +49,11 @@ service cloud.firestore {
     match /acceso/{doc} {
       allow read, write: if dueno();
     }
+    // Acordes sacados con el analizador y las correcciones del equipo (material para entrenarlo).
+    match /analisis/{id} {
+      allow read, create, update: if miembro();
+      allow delete: if lider();
+    }
     match /config/{doc} {
       allow read: if miembro();
       allow write: if lider();
@@ -91,6 +96,10 @@ service cloud.firestore {
     }
     match /ministerios/renuevo/acceso/{doc} {
       allow read, write: if rDueno();
+    }
+    match /ministerios/renuevo/analisis/{id} {
+      allow read, create, update: if rMiembro();
+      allow delete: if rLider();
     }
     match /ministerios/renuevo/config/{doc} {
       allow read: if rMiembro();

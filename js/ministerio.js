@@ -17,7 +17,7 @@
       prefijo: "ministerios/renuevo/", dueno: "jd.nivek123@gmail.com", admin: "rojasaire@gmail.com", colorBarra: "#f4f7fb",
     },
   };
-  const SCRIPTS = ["js/config.js", "js/acordes.js", "js/datos.js", "js/app.js"];
+  const SCRIPTS = ["js/config.js", "js/acordes.js", "js/datos.js", "js/sacar.js", "js/app.js"];
   const FIN_VIDEO = 5.2; // segundo en que las dos palomas ya se volvieron medallones
 
   function cargar(src) {

@@ -63,7 +63,8 @@
 
   /* ---------- Estado ---------- */
   const S = {
-    vista: "inicio",       // inicio | cancionero | repertorio | rep-editar | elegir | cancion | editar
+    vista: "inicio",       // inicio | cancionero | repertorio | rep-editar | elegir | cancion | editar | equipo | sacar
+    sacarLink: "",         // link con el que se abre "Sacar acordes"
     canciones: {}, repertorios: {},
     publicas: {}, privadas: {}, // "canciones" (las ve cualquiera) y "canciones_equipo" (solo el equipo)
     rep: null, prefill: null, ordenando: false, arrastrando: false, catElegir: "",
@@ -591,6 +592,7 @@
         <div class="seccion-titulo"><h1>Cancionero</h1><p>Busca, practica y adora.</p></div>
         <div class="fila">${(() => { const n = pendientesImportar().length; return n ? `<button class="boton" data-accion="importar">${ic("bajar")} Importar ${n} ${n === 1 ? "alabanza" : "alabanzas"}</button>` : ""; })()}
         ${(() => { const n = puede("borrar") ? linksPendientes().length : 0; return n ? `<button class="boton" data-accion="poner-links">${ic("play")} Poner ${n} ${n === 1 ? "link" : "links"}</button>` : ""; })()}
+        ${puede("editar") ? `<button class="boton" data-accion="sacar">${ic("varita")} Sacar acordes</button>` : ""}
         ${puede("editar") ? `<button class="boton boton--principal" data-accion="nueva">${ic("mas")} Nueva alabanza</button>` : ""}</div>
       </div>
       <label class="buscador">${ic("buscar")}<input class="campo" id="buscar-lista" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar canción, autor, tono o una frase" value="${esc(S.buscar)}" aria-label="Buscar canción"></label>
@@ -860,6 +862,7 @@
         <label class="etiqueta">Categoría<select class="campo" id="f-categoria" name="categoria" style="border-radius:12px;min-height:48px">
           <option value="">Sin categoría</option>${CATEGORIAS.map((x) => `<option ${c.categoria === x.id ? "selected" : ""}>${x.id}</option>`).join("")}</select></label>
         <label class="etiqueta">Link de la versión que seguimos<input class="campo" id="f-link" name="link" type="url" inputmode="url" autocapitalize="none" placeholder="https://youtube.com/…" value="${esc(c.link)}"></label>
+        <div class="fila"><button class="boton boton--chico" type="button" data-accion="sacar-link">${ic("varita")} Sacar acordes de este link</button></div>
         <label class="casilla"><input type="checkbox" name="privada" ${c.privada ? "checked" : ""}><span>${ic("candado")} <b>Solo equipo</b>: no aparece en la página pública, solo la ven los que inician sesión. Úsalo para alabanzas de otros artistas.</span></label>
         <div style="display:grid;gap:10px">
           <div class="fila fila--entre"><span class="etiqueta">Letra con acordes</span>
@@ -911,7 +914,7 @@
   }
 
   /* ---------- Render ---------- */
-  const SECCION = { inicio: "inicio", cancionero: "cancionero", repertorio: "repertorio", "rep-editar": "repertorio", elegir: "repertorio", editar: "cancionero" };
+  const SECCION = { inicio: "inicio", cancionero: "cancionero", repertorio: "repertorio", "rep-editar": "repertorio", elegir: "repertorio", editar: "cancionero", sacar: "cancionero" };
   function render() {
     const sec = S.vista === "cancion" ? S.volverA : SECCION[S.vista];
     document.querySelectorAll("[data-nav]").forEach((a) => {
@@ -929,6 +932,14 @@
     const puerta = vistaPuerta();
     document.body.classList.toggle("en-puerta", !!puerta);
     if (puerta) { app.innerHTML = puerta; document.getElementById("pasador").innerHTML = ""; return; }
+    // "Sacar acordes" se maneja solo (js/sacar.js): no se vuelve a pintar con cada cambio de datos, así no se corta el video.
+    if (S.vista === "sacar") {
+      if (!document.getElementById("sacar")) {
+        app.innerHTML = '<div id="sacar"></div>'; document.getElementById("pasador").innerHTML = ""; document.body.classList.remove("con-pasador");
+        window.Sacar.montar(document.getElementById("sacar"), sacarCtx(), S.sacarLink);
+      }
+      return;
+    }
     app.innerHTML = { inicio: vistaInicio, cancionero: vistaCancionero, repertorio: vistaRepertorio, "rep-editar": vistaRepEditar, elegir: vistaElegir, cancion: vistaCancion, editar: vistaEditar, equipo: vistaEquipo }[S.vista]();
     const pas = pasadorHTML();
     document.getElementById("pasador").innerHTML = pas;
@@ -948,6 +959,11 @@
         + `<button class="boton boton--chico" data-accion="salir" aria-label="Salir">${ic("salir")}<span class="solo-escritorio">Salir</span></button>`
       : `<button class="boton boton--chico boton--principal" data-accion="entrar">${ic("entrar")} Iniciar sesión</button>`;
   }
+  const sacarCtx = () => ({
+    fuente: S.fuente, ic, avisar,
+    volver: () => irA("cancionero"),
+    crearAlabanza(p) { S.prefill = p; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = "cancionero"; S.contexto = "cancionero"; irA("editar"); },
+  });
   function actualizarVistaPrevia() {
     const f = document.getElementById("form-cancion"), v = document.getElementById("vista-previa");
     if (f && v) v.innerHTML = letraHTML(f.letra.value, 0, f.tono.value) || '<p class="ayuda">Escribe la letra para verla aquí.</p>';
@@ -1293,6 +1309,12 @@
       case "importar-reps": return importarRepertorios();
       case "nueva": S.prefill = null; S.cancionId = null; S.editorPestana = "escribir"; S.volverA = SECCION[S.vista] || "cancionero"; S.contexto = "cancionero"; return irA("editar");
       case "editar": S.editorPestana = "escribir"; return irA("editar");
+      case "sacar": S.sacarLink = ""; return irA("sacar");
+      case "sacar-link": {
+        const l = document.getElementById("f-link").value.trim();
+        if (!l) { document.getElementById("f-link").focus(); return avisar("Pega primero el link de YouTube.", true); }
+        S.sacarLink = l; return irA("sacar");
+      }
       case "cancelar-edicion": S.prefill = null; return irA(S.cancionId ? "cancion" : S.volverA === "repertorio" ? (S.vista === "editar" && S.contexto === S.rep ? "repertorio" : "elegir") : "cancionero");
       case "volver": return irA(S.volverA || "cancionero");
       case "anterior": return mover(-1);

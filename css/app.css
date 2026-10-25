@@ -481,3 +481,55 @@ body.sin-scroll { overflow: hidden; }
 :root[data-ministerio="renuevo"] .presentacion .parte,
 :root[data-ministerio="renuevo"] .visor__hojas h2,
 :root[data-ministerio="renuevo"] .visor .adelanto__cab span { color: #a9c4ee; }
+
+/* ---------- Sacar acordes ---------- */
+.sacar { display: grid; gap: 20px; align-content: start; }
+.sacar__pedido { display: grid; gap: 12px; max-width: 40rem; }
+.sacar__subir { cursor: pointer; }
+.aviso--error { background: color-mix(in srgb, var(--peligro) 12%, var(--crema)); color: var(--peligro); }
+.sacar__cargando { display: flex; gap: 14px; align-items: center; padding: 16px 18px; background: var(--crema); border: 1px solid var(--linea); border-radius: var(--radio); max-width: 40rem; }
+.sacar__cargando div { display: grid; gap: 2px; }
+.sacar__cargando span:not(.sacar__onda) { font-size: .875rem; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+.sacar__onda { display: inline-flex; gap: 3px; align-items: center; height: 28px; color: var(--acorde); flex: none; }
+.sacar__onda i { width: 4px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: center; animation: onda 1.1s ease-in-out infinite; }
+.sacar__onda i:nth-child(2) { animation-delay: -.9s; } .sacar__onda i:nth-child(3) { animation-delay: -.7s; }
+.sacar__onda i:nth-child(4) { animation-delay: -.5s; } .sacar__onda i:nth-child(5) { animation-delay: -.3s; }
+@keyframes onda { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .sacar__onda i { animation: none; transform: scaleY(.6); } }
+
+.sacar__resultado { display: grid; gap: 16px; }
+.sacar__titulo { font: 600 1.375rem/1.25 var(--f-titulo); overflow-wrap: anywhere; }
+.sacar__medio { max-width: 40rem; }
+.sacar__medio #sacar-yt, .sacar__medio iframe { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: var(--radio); background: var(--cafe-osc); }
+.sacar__medio audio { width: 100%; }
+.sacar__datos { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.sacar__datos div { background: var(--crema); border: 1px solid var(--linea); border-radius: 12px; padding: 8px 16px; min-width: 6.5rem; }
+.sacar__datos dt { font-size: .75rem; font-weight: 700; color: var(--tinta-2); text-transform: uppercase; letter-spacing: .06em; }
+.sacar__datos dd { margin: 0; font-size: 1.375rem; font-weight: 800; color: var(--acorde); font-variant-numeric: tabular-nums; }
+.sacar__datos dd small { font-size: .75rem; color: var(--tinta-2); }
+
+.linea-tiempo { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tramo { position: relative; width: var(--ancho); min-height: 56px; display: grid; align-content: center; gap: 0; padding: 6px 10px; text-align: left;
+  border: 1px solid var(--linea); border-radius: 10px; background: var(--crema); cursor: pointer; scroll-margin: 96px;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 140ms var(--ease-out); }
+.tramo:active { transform: scale(.97); }
+.tramo b { font-size: 1.0625rem; font-weight: 800; color: var(--acorde); line-height: 1.2; }
+.tramo small { font-size: .6875rem; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+.tramo--vacio b { color: var(--tinta-2); }
+.tramo.es-actual { background: var(--cafe); border-color: var(--cafe); }
+.tramo.es-actual b, .tramo.es-actual small { color: var(--tinta-inv); }
+.tramo.es-elegido { outline: 2px solid var(--cafe); outline-offset: 2px; }
+.tramo--corregido::after { content: ""; position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--seccion); }
+@media (hover: hover) and (pointer: fine) { .tramo:not(.es-actual):hover { background: var(--arena-2); border-color: var(--arena-3); } }
+
+.corrector { display: grid; gap: 12px; padding: 14px 16px; background: var(--crema); border: 1px solid var(--arena-3); border-radius: var(--radio); box-shadow: var(--sombra-1); max-width: 40rem; }
+.corrector .chip { min-height: 40px; min-width: 3rem; font-size: .9375rem; color: var(--acorde); }
+.corrector .chip[aria-pressed="true"] { color: var(--tinta-inv); }
+.corrector .campo[aria-invalid] { border-color: var(--peligro); }
+@media (max-width: 760px) {
+  .corrector { position: sticky; bottom: calc(var(--barra) + 8px + env(safe-area-inset-bottom, 0px)); z-index: 5; box-shadow: var(--sombra-2); }
+}
+.sacar__nota { font-size: .875rem; }
+.sacar__tempo dd { display: flex; align-items: center; gap: 8px; }
+.sacar__bpm-ajuste { display: inline-flex; gap: 4px; }
+.sacar__bpm-ajuste .chip { padding: 4px 9px; min-height: 30px; color: var(--cafe); }
