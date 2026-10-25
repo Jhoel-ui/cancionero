@@ -567,9 +567,10 @@
         repsImportar = Array.isArray(l) ? l.filter((r) => r && r.nombre && r.lista) : []; render();
       }).catch(() => {});
     }
-    return repsImportar.filter((n) => { const r = mismoRep(n); return !r || (r.importado || 0) < (n.version || 0); });
+    return repsImportar.filter((n) => { const r = mismoRep(n); return !r || r.fecha !== (n.fecha || "") || (r.importado || 0) < (n.version || 0); });
   }
-  const mismoRep = (n) => Object.values(S.repertorios).find((r) => clave(r.nombre) === clave(n.nombre) && r.fecha === (n.fecha || ""));
+  // "antes": la fecha que tenía, para mover el mismo repertorio a otra fecha sin duplicarlo.
+  const mismoRep = (n) => Object.values(S.repertorios).find((r) => clave(r.nombre) === clave(n.nombre) && [n.fecha || "", n.antes].includes(r.fecha));
   async function importarRepertorios() {
     const lista = repsPendientes();
     if (!lista.length || !confirm(`¿Agregar ${lista.map((r) => "“" + r.nombre + "”").join(", ")} a los repertorios?`)) return;
