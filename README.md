@@ -8,6 +8,8 @@ Es una página estática (HTML, CSS y JS, sin instalar nada). Los datos viven en
 - `index.html`, `css/app.css`, `js/app.js`: la página.
 - `js/acordes.js`: lectura de acordes `[G]`, transposición y conversión desde "acordes arriba".
 - `js/datos.js`: conexión a los datos (Firebase, vista previa en claude.ai o modo de prueba local).
+- `js/sacar.js`: **Sacar acordes**: link de YouTube o audio → acordes con su tiempo, tono y BPM para revisar y pasar a una alabanza. Las correcciones se guardan en `analisis` para entrenar el analizador.
+- `servidor-acordes/`: el analizador (madmom), para publicar gratis en Hugging Face; ver su README. Su dirección va en `js/config.js` (`ANALIZADOR_ACORDES`).
 - `js/config.js`: configuración de Firebase del ministerio (vacía = modo de prueba).
 - `firestore.rules`: quién puede ver, editar y borrar.
 - `sw.js`: guarda la página en el teléfono para abrirla sin señal.

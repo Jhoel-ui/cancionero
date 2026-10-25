@@ -1,0 +1,10 @@
+numpy>=2.0
+scipy
+cython
+mido
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+google-auth==2.37.0
+requests
+yt-dlp

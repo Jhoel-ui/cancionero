@@ -85,6 +85,8 @@
       },
       borrar: (coleccion, id) => fs.deleteDoc(fs.doc(db, ruta(coleccion), id)),
       async entrar() { await au.signInWithPopup(auth, new au.GoogleAuthProvider()); },
+      // Para el analizador de acordes: prueba de que quien pide entró con su cuenta.
+      token: () => (auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve("")),
       async salir() { await au.signOut(auth); },
       async descargar(nombre, blob) { descargaNavegador(nombre, blob); },
     };

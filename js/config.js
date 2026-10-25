@@ -9,3 +9,5 @@ window.CONFIG_FIREBASE = {
   appId: "1:497130298106:web:927d79d4e707f4a7400743",
   dueno: "rojasaire@gmail.com",
 };
+// Analizador de acordes (servidor-acordes/, publicado en Hugging Face). Vacío = "Sacar acordes" avisa que aún no está.
+window.ANALIZADOR_ACORDES = "";
