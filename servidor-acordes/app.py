@@ -110,7 +110,7 @@ async def por_link(request: Request, authorization: str | None = Header(None)):
     if video in _memoria:
         _memoria.move_to_end(video)
         return _memoria[video]
-    with tempfile.TemporaryDirectory() as carpeta:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as carpeta:
         ruta, titulo = await run_in_threadpool(_bajar, "https://www.youtube.com/watch?v=" + video, carpeta)
         resultado = await run_in_threadpool(_analizar, ruta)
     resultado.update(titulo=titulo, video=video)
@@ -127,7 +127,7 @@ async def por_archivo(audio: UploadFile = File(...), authorization: str | None =
     if len(datos) > MAX_MB * 1024 * 1024:
         raise HTTPException(413, f"El archivo pasa de {MAX_MB} MB.")
     nombre, ext = os.path.splitext(audio.filename or "audio")
-    with tempfile.TemporaryDirectory() as carpeta:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as carpeta:
         ruta = os.path.join(carpeta, "subido" + ext[:6])
         with open(ruta, "wb") as f:
             f.write(datos)
