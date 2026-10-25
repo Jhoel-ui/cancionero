@@ -10,4 +10,4 @@ window.CONFIG_FIREBASE = {
   dueno: "rojasaire@gmail.com",
 };
 // Analizador de acordes (servidor-acordes/, publicado en Hugging Face). Vacío = "Sacar acordes" avisa que aún no está.
-window.ANALIZADOR_ACORDES = "";
+window.ANALIZADOR_ACORDES = "https://rodri12t-acordes-cancionero.hf.space";
