@@ -54,7 +54,8 @@
     pintar(); const t = setInterval(pintar, 1000);
     try {
       const token = ctx.fuente && ctx.fuente.token ? await ctx.fuente.token() : "";
-      const cab = token ? { Authorization: "Bearer " + token } : {};
+      // El túnel gratis de ngrok (analizador en la PC) muestra un aviso en vez de responder si no se le pide saltarlo.
+      const cab = Object.assign({ "ngrok-skip-browser-warning": "1" }, token ? { Authorization: "Bearer " + token } : {});
       let r;
       if (archivo) {
         const datos = new FormData(); datos.append("audio", archivo);

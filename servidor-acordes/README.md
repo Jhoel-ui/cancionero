@@ -24,6 +24,13 @@ Va en el mismo proyecto de Firebase (`cancionero-renovacion`), con el plan Blaze
 
 Cada cambio en `servidor-acordes/` que llegue a `main` se vuelve a publicar solo.
 
+## En una PC con Windows (mientras no esté en la nube)
+1. Python 3.12, ffmpeg, Deno y ngrok (`winget install Python.Python.3.12 Gyan.FFmpeg DenoLand.Deno ngrok.ngrok`).
+2. En esta carpeta: `py -3.12 -m venv .venv`, luego `.venv\Scripts\pip install -r requirements.txt setuptools wheel cython`
+   y `.venv\Scripts\pip install --no-build-isolation git+https://github.com/CPJKU/madmom` (necesita las herramientas de compilación de C++ de Visual Studio).
+3. Cuenta gratis en ngrok: `ngrok config add-authtoken <token>` y el dominio fijo gratis (Domains) en `windows/dominio-ngrok.txt`.
+4. `windows/iniciar-analizador.bat` lo enciende (acceso directo en el escritorio). En `js/config.js`, `ANALIZADOR_ACORDES = "https://<dominio>"`.
+
 ## Variables (Settings → Variables and secrets), todas opcionales
 - `FIREBASE_PROYECTO`: por defecto `cancionero-renovacion`.
 - `ORIGENES`: páginas que pueden usarlo, por defecto `https://jhoel-ui.github.io`.

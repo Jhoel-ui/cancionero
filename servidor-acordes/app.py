@@ -27,7 +27,7 @@ MAX_MB = 40
 COOKIES = os.environ.get("YT_COOKIES")  # contenido de un cookies.txt, solo si YouTube empieza a pedir "no soy un robot"
 
 app = FastAPI(title="Acordes Cancionero")
-app.add_middleware(CORSMiddleware, allow_origins=ORIGENES, allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
+app.add_middleware(CORSMiddleware, allow_origins=ORIGENES, allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type", "ngrok-skip-browser-warning"])
 
 _pedido_google = google.auth.transport.requests.Request()
 _uno_a_la_vez = threading.Lock()  # el análisis usa todo el procesador; mejor uno tras otro
