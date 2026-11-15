@@ -139,15 +139,16 @@
 
   /* "Acordes arriba" tal cual vienen de la foto o el PDF: la línea de acordes encima de la letra, en ancho fijo
      y sin acomodar, para que se vea igual que el original. Se usa cuando la letra no tiene acordes [G]. */
-  const DELIM = /([\/()|*\-–—:,.]+)/, REPETIDO = /^([A-G])\1+$|^[A-G][#b]?dis$/;
+  const DELIM = /([\/()|*\-–—:,.]+)/, SEP = /^[\/()|*\-–—:,.]+$/, REPETIDO = /^([A-G])\1+$|^[A-G][#b]?dis$/;
+  const partes = (tok) => (esAcorde(tok) ? [tok] : tok.split(DELIM));      // "do-" (do menor) es un solo acorde
   function esLineaArriba(l) {
     if (l.includes("[")) return false;
     const t = l.trim().split(/\s+/).filter(Boolean);
     let acordes = 0;
     for (const tok of t) {
       if (/^[A-Za-zÁÉÍÓÚáéíóú]+:$/.test(tok)) continue;                     // "Intro:", "Metales:"
-      for (const p of tok.split(DELIM)) {
-        if (!p || DELIM.test(p) || /^x?\d+x?$/i.test(p)) continue;          // separadores, "x2", "2x"
+      for (const p of partes(tok)) {
+        if (!p || SEP.test(p) || /^x?\d+x?$/i.test(p)) continue;          // separadores, "x2", "2x"
         if (!esAcorde(p) && !REPETIDO.test(p)) return false;                // "GG" = dos golpes de G
         acordes++;
       }
@@ -160,7 +161,7 @@
     if (!pasos) return l;
     let s = ""; const re = /\S+/g; let m;
     while ((m = re.exec(l))) {
-      const tok = m[0].split(DELIM).map((p) => (!p || DELIM.test(p) ? p : esAcorde(p) ? transponerAcorde(normalizarAcorde(p), pasos, bem)
+      const tok = partes(m[0]).map((p) => (!p || SEP.test(p) ? p : esAcorde(p) ? transponerAcorde(normalizarAcorde(p), pasos, bem)
         : REPETIDO.test(p) ? transponerAcorde(p[0], pasos, bem).repeat(p.length) : p)).join("");
       s = s.padEnd(s ? Math.max(m.index, s.length + 1) : m.index, " ") + tok;
     }

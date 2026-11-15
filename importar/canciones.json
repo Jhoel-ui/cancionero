@@ -2,56 +2,65 @@
  {
   "titulo": "Como hizo David",
   "tono": "Cm",
-  "letra": "[Cm]Como hizo David de[Gm]lante de Dios\n[Cm]yo danzaré [Gm]y me gozaré\nde[Bb]lante de [Cm]mi [Gm]rey\n\n[Cm]Como hizo María [Gm]con el tamboril\n[Cm]ya aplaudiré [Gm]y me gozaré\nde[Bb]lante [Cm]de mi rey\n\n[Cm]Como hizo Judá cuando [Gm]fue a pelear\n[Cm]daré un grito [Gm]de aclamación\nde[Bb]lante de [Cm]mi [Gm]rey\n\n[Cm]Como hizo Josué [Gm]en Jericó\n[Cm]gritaré y [Gm]conquistaré\nde[Bb]lante de [Cm]mi [Gm]rey\n\na[Cm]hora puedo yo [Bb]venir ante ti\ny a[Cm]labar[Bb]te [Cm]mi rey\nme [Cm]postraré y ado[Bb]raré\nal [Cm]Cris[Bb]to [Cm]Rey.",
-  "fuente": "imagen de Rodri"
+  "letra": "do-       sol-\ncomo hizo david delante de dios\ndo-        sol-\nyo danzare y me gozare\n  SIB+     do-    sol-\ndelante de mi rey\n\ndo-           sol-\ncomo hizo maria con el tamboril\n do-       sol-\nya aplaudire y me gozare\n SIB+      do-\ndelante  de mi rey\n\ndo-              sol-\ncomo hizo juda cuando fue a pelear\ndo-        sol-\ndaré un grito de aclamación\n SIB+     do-   sol-\ndelante de mi rey\n\ndo-         sol-\ncomo hizo josue en jerico\ndo-   sol-\ngritare y conquistare\n  SIB+    do-    sol-\ndelante de mi rey\n\n   do-         SIB+\nahora puedo yo venir ante ti\n   do-   SIB+ do-\ny alabarte     mi rey\n   do-         SIB+\nme postrare y adorare\n do-   SIB+     do-\nla cristo  e rey.",
+  "fuente": "imagen de Rodri; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Salmos 91",
   "tono": "Cm",
-  "letra": "Intro: [Cm] [Eb] [G] [Cm]\n\n[Cm]Mi protector oh Altísimo\nBa[Bb]jo tus alas me guardarás\n[Ab]De día y noche mi [G]morada se[Cm]rás\n\n[Cm]Caerán a un lado mil\nOtros [Bb]diez mil a mi diestra\n[Ab]Mas a mi [G]no lle[Cm]garán\n[Ab]Mas a mi [Fm]no lle[Cm]garán\n\nCoro:\n[Cm]El que habita al abrigo del Al[Eb]tísimo\nbajo la [G]sombra del Omnipotente mo[Cm]rará\n[Cm]Jehová esperanza mía y mi cas[Eb]tillo\n[G]eres mi Dios en quien yo con[Cm]fiaré.\n\nLalalalalala",
-  "fuente": "imagen de Rodri"
+  "letra": "INTRO: do- MIB+ SOL+ do-\n\nDo-\nMi protector oh altísimo\n   SIB+\nBajo tus alas me guardaras\nLAB+            SOL+    do-\nDe día y noche mi morada serás\n\nDo-\nCaerán a un lado mil\n    SIB+\nOtros diez mil a mi diestra\n LAB+     SOL+     do-\nMas a mi no llegarán\nLAB+      fa-     do-\nMas a mi no llegarán\n\nCORO:\nDo-                            MIB+\nEl que habita al abrigo del altisimo\n     SOL+                        do-\nbajo la sombra del omnipotenete morará\ndo-                           MIB+\njehova esperanza mia y mi castillo\nSOL+                        do-\neres mi Dios en quien yo confiaré.\n\nLalalalalala",
+  "fuente": "imagen de Rodri; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Te necesito Jesús",
   "tono": "G",
-  "letra": "[G]Te necesito Jesús [C]cada día\n[D]sin tu presencia no [Em]valgo nada\n\n[G]Te necesito Jesús [C]en mi vida\n[D]Sin tu amor no sé [Em]qué haría\n\nCoro:\n[C]Como agua en el desierto\n[G]te necesito\n[C]como lluvia en las sequías\n[G]te necesito\n[D]porque tú eres el [Bm]agua\nque [Em]yo bebo\n\n[D]porque tú eres mi [Bm]vida\n[Em]mi fortaleza",
-  "fuente": "imagen de Rodri (la captura se corta aquí)"
+  "letra": "SOL+              DO+\nTe necesito Jesús cada día\nRE+                   mi-\nsin tu presencia no valgo nada\n\nSOL+              DO+\nTe necesito Jesús en mi vida\nRE+               mi-\nSin tu amor no sé qué haría\nCORO:\nDO+\ncomo agua en el desierto\nSOL+\nte necesito\nDO+\ncomo lluvia en las sequias\nSOL+\n te necesito\nRE+              si-\nporque tú eres el agua\n      mi-\nque yo bebo\n\nRE+            si-\nporque tú eres mi vida\nmi-\nmi fortaleza",
+  "fuente": "imagen de Rodri (la captura se corta aquí); acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Si me dices a dónde vas",
   "tono": "F#m",
-  "letra": "[F#m]Si me dices a [A]dónde vas,\nYo [E]voy a alabar al se[F#m]ñor.\n\nComo lo [E]vas a hacer,\nComo lo vas a ha[F#m]cer.\n\nVoy a [A]cantar, voy a [E]danzar,\nEn es[D]pí[E]ritu y en ver[F#m]dad.",
-  "fuente": "Repertorio 1"
+  "letra": "       F#m            A\nSi me dices a dónde vas,\n    E                 F#m\nYo voy a alabar al señor.\n\n                  E\nComo lo vas a hacer,\n                  F#m\nComo lo vas a hacer.\n\n          A             E\nVoy a cantar, voy a danzar,\n       D    E        F#m\nEn espíritu y en verdad.",
+  "fuente": "Repertorio 1; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Como cordero",
   "tono": "Em",
-  "letra": "[Em]Con alegría yo can[G]taré,\nAla[D]banzas a mi Se[Em]ñor.\n\nCoro:\nComo cordero yo sal[D]taré,\nEn su presencia me go[E]zaré. (x2)\n\nBautízame, lléname mi Se[G]ñor,\nCon [D]tu espíritu aví[Em]vame.\n\nTu fuego está en mi cora[G]zón,\nRe[D]novando todo mi [Em]ser.",
-  "fuente": "Repertorio 1"
+  "letra": "Em                   G\nCon alegría yo cantare,\n    D              Em\nAlabanzas a mi Señor.\n\nCORO:\n                       D\nComo cordero yo saltare,\n                         E\nEn su presencia me gozare. //\n\n                           G\nBautízame, lléname mi Señor,\n          D           Em\nCon tu espíritu avívame.\n\n                         G\nTu fuego está en mi corazón,\n       D             Em\nRenovando todo mi ser.",
+  "fuente": "Repertorio 1; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Mi Jesús",
   "tono": "Em",
-  "letra": "Mi [G]Je[D]sús, yo te [Em]amo,\nMi [G]Je[D]sús, yo te a[Em]doro.\n\nComo [G]las águi[D]las, vo[Em]laré,\nComo [G]cor[D]derito sal[Em]taré.\n\nSaltando, sal[D]tando te ala[Em]baré,\nY dando [D]vueltas me go[Em]zaré.",
-  "fuente": "Repertorio 1"
+  "letra": "       G   D      Em\nMi Jesús, yo te amo,\n       G   D      Em\nMi Jesús, yo te adoro.\n\n         G        D   Em\nComo las águilas, volare,\n            G    D   Em\nComo corderito saltare.\n\n             D             Em\nSaltando, saltando te alabare,\n           D             Em\nY dando vueltas me gozare.",
+  "fuente": "Repertorio 1; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Qué más puedo ofrecerte",
   "tono": "Em",
-  "letra": "Qué [C]más puedo ofre[G]certe,\nSola[D]mente mi cora[Em]zón.\n\nSola[G]mente mi cora[Em]zón,\nTe puedo o[D]frecer oh Se[Em]ñor.\n\nMi [G]vida, mi vida, todo [D]es tuyo oh Se[Em]ñor.",
-  "fuente": "Repertorio 1"
+  "letra": "           C           G\nQué más puedo ofrecerte,\n     D            Em\nSolamente mi corazón.\n\n     G            Em\nSolamente mi corazón,\n         D            Em\nTe puedo ofrecer o Señor.\n\n    G                    D           Em\nMi vida, mi vida, todo es tuyo oh Señor.",
+  "fuente": "Repertorio 1; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "En las manos de mi Jesús",
   "tono": "Bm",
-  "letra": "[G]En las manos de mi Jesús,\nEn las manos de mi Jesús\nEstoy se[D]gu[A]ro, nada, nada me fal[Bm]tará.\n\n[G]Él es mi es[D]cudo, mi [G]forta[D]leza,\n[A]Quien me levanta mi ca[Bm]beza.",
-  "fuente": "Repertorio 1"
+  "letra": "G\nEn las manos de mi Jesús,\nEn las manos de mi Jesús\n           D   A                  Bm\nEstoy seguro, Nada, nada me faltara.\n\n  G            D     G      D\nÉl es mi escudo, mi fortaleza,\n    A                     Bm\nQuien me levanta mi cabeza.",
+  "fuente": "Repertorio 1; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Quédate en mi vida",
   "tono": "Bm",
-  "letra": "[G]Quédate aquí, en mi [D]vi[A]da oh Se[Bm]ñor.\n[D]Sana mi alma, [A]sana mi [Bm]vida.\n\n[G]Fluye en mi vida, [D]Espí[A]ritu [Bm]Santo.\n[D]Necesito más, [A]más de tu pre[Bm]sencia.",
-  "fuente": "Repertorio 1"
+  "letra": "  G                  D   A      Bm\nQuédate aquí, en mi vida oh Señor.\nD           A            Bm\nSana mi alma, sana mi vida.\n\nG                 D   A     Bm\nFluye en mi vida, Espíritu Santo.\nD          A                 Bm\nNecesito más, más de tu presencia.",
+  "fuente": "Repertorio 1; acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Feliz cumpleaños",
@@ -281,9 +290,9 @@
   "categoria": "Vigilia",
   "link": "https://www.youtube.com/watch?v=NZqEgIyWgUk",
   "privada": true,
-  "letra": "Intro:\n[F] ([Am]) [G] [C/E] [Am] [G] [C]\n\nVerso 1:\n[C]Mil generaciones, a[F]doran a una [C]voz\nLe [Am]cantan al Cor[G]dero su can[C]ción\n[C]Y los que han creído y [F]los que han de cre[C]er\n[Am]Cantan al Cor[G]dero su can[F]ción\n\nPre-Coro:\nTu [F]nombre es más [Am]alto, [G]tu nombre es más grande\nTu [Am]nombre sobre todo es[F]tá\nSean [F]tronos, princi[Am]pados, [G]poderes y dominios\nTu [Am]nombre sobre todo es[Dm]tá\n\nCoro 1:\nCantan ánge[F]les: San[Am]to, [G]canta la crea[C/E]ción: San[Am]to\nExaltado es[Dm]tás, San[G]to, Santo por [C]siempre\n\nCoro 2:\nÓyenos can[F]tar: San[Am]to, [G]Rey de majes[C/E]tad, San[Am]to\nPor siempre serás [Dm]Santo, [G]Santo por [C]siempre\n\nVerso 2:\n[C]Si eres perdonado, y [F]Él te redi[C]mió\n[Am]Cántale al Cor[G]dero su can[F]ción\n[C]Si con Él caminas, [F]libre del te[C]mor\n[Am]Cántale al Cor[G]dero su can[F]ción, can[Am]temos al Cor[G]dero su can[F]ción",
-  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-21)",
-  "reemplaza": "2026-10-21-lacuerda-C"
+  "letra": "Intro: F (Am) G C/E Am G C\n\nVerso 1:\nC                   F           C\nMil Generaciones, adoran a una voz\n    Am           G           C\nLe cantan al Cordero Su Canción\nC                       F               C\nY los que han creído y los que han de creer\nAm            G           F\nCantan al Cordero Su canción\n\nPre-Coro:\n    F             (Am) G\nTu nombre es más alto, tu Nombre es más grande\n    Am                  F\nTu Nombre sobre todo está\n       F           (Am) G\nSean tronos, principados, poderes y dominios\n    Am                 Dm\nTu Nombre sobre todo está\n\nCoro 1:\n            F   (Am) G              C/E    Am\nCantan ángeles Santo, Canta la creación Santo\n            Dm     G             C\nExaltado estás Santo, Santo por siempre\n\nCoro 2:\n           F   (Am) G            C/E    Am\nÓyenos cantar Santo, Rey de majestad Santo\n               Dm     G             C\nPor siempre serás Santo, Santo por siempre\n\nVerso 2:\nC                    F          C\nSi eres perdonado, y Él te redimió\nAm             G           F\nCántale al Cordero Su canción\nC                   F           C\nSi con Él caminas, libre del temor\nAm             G           F       Am          G           F\nCántale al Cordero Su canción, Cantemos al Cordero Su canción",
+  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-21); acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Gracia Sublime",
@@ -491,9 +500,9 @@
   "categoria": "Vigilia",
   "link": "https://www.youtube.com/watch?v=V1QBIb7AEkA",
   "privada": true,
-  "letra": "Intro: (x2)\n[C] [D] [Em] [Bm]\n\nVerso 1:\nMi or[C]gullo me sacó del jar[D]dín\nSu humil[Em]dad puso el jardín en [Bm]mí\nSi ven[C]diera todo lo que tengo\nA [D]cambio de su amor, yo falla[Em]ría [Bm]\n\nPre-Coro: (x2)\nPorque su [C]amor no se compra\n[D]Ni se merece\nSu a[Em]mor es un regalo\nDe [Bm]gracia se recibe\n\nCoro: (x2)\n[C]Quiero conocer a Je[D]sús\n[Em]Quiero conocer a Je[Bm]sús\n\nVerso 1:\nMi or[C]gullo me sacó del jar[D]dín\nSu humil[Em]dad puso el jardín en [Bm]mí\nSi ven[C]diera todo lo que tengo\nA [D]cambio de su amor, yo falla[Em]ría [Bm]\n\nPre-Coro:\nPorque su [C]amor no se compra\n[D]Ni se merece\nSu a[Em]mor es un regalo\nDe [Bm]gracia se recibe\n\nPre-Coro:\nPorque su [C]amor no se compra\n[D]Ni se merece\nSu a[Em]mor es un regalo\nDe [Bm]gracia se recibe\n\nCoro: (x4)\n[C]Quiero conocer a Je[D]sús\n[Em]Quiero conocer a Je[Bm]sús\n\nIntermedio: (x2)\n[C] [D] [Em] [Bm]\n\nPuente: (x6)\nYe[C]shuuu[D]uuaaa[Em]aaaaa[Bm]aaa\n\nPuente 2: (x4)\nMi a[C]mado es el más be[Em]llo entre\nMi[G]llares y mil[Bm]lares",
-  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-22)",
-  "reemplaza": "2026-10-22-lacuerda-g12"
+  "letra": "Intro:\n|C|D|Em|Bm|  x2\n\n1 estrofa:\n     C                    D\nMi orgullo me sacó del jardín\n         Em                    Bm\nSu humildad puso el jardín en mí\n      C\nSi vendiera todo lo que tengo\n  D                           Em |Bm|\nA cambio de su amor, yo fallaría\n\nPrecoro (x2):\n          C\nPorque su amor no se compra\nD\nNi se merece\n     Em\nSu amor es un regalo\n    Bm\nDe gracia se recibe\n\nCoro (x2):\nC                  D\nQuiero conocer a Jesús\nEm                  Bm\nQuiero conocer a Jesús\n\n1 estrofa\nPrecoro\nPrecoro\nCoro x4\n\nIntermedio:\n|C|D|Em|Bm| x2\n\nPuente (x6):\n  C      D      Em     Bm\nYeshuuuuuaaaaaaaaaaaaaaaa\n\n2 Puente (x4):\n    C               Em\nMi amado es el más bello entre\n  G           Bm\nMillares y millares",
+  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-22); acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Si te Tengo a Ti",
@@ -526,8 +535,9 @@
   "categoria": "Adoración",
   "link": "https://www.youtube.com/watch?v=8kt9-azpFY4",
   "privada": true,
-  "letra": "Verso 1:\n[G]No [A]basta solo [F#m]con can[Bm]tar, [G]no basta so[A]lo con de[F#m]cir [Bm]\n[G]No es suficien[A]te so[F#m]lo con que[Bm]rer hacer, [A] [Em]es necesa[A]rio mo[D]rir.\n\nVerso 2:\n[G]No [A]basta solo [F#m]con so[Bm]ñar, [G]no basta so[A]lo con pe[F#m]dir [Bm]\n[G]No es suficien[A]te so[F#m]lo con que[Bm]rer tener, [A] [Em]es necesa[A]rio mo[D]rir.\n\nCoro:\n[G]Dame tu vi[A]da, [F#m]esa clase de vi[Bm]da que sabes dar\n[G]Dame tu vi[A]da, [F#m]yo quiero vi[Bm]vir solo para ti\n[G]Dame tu vi[A]da, re[F#m]sucíta[Bm]me en ti\n[Em]Yo quiero vi[A]vir solo para [D]ti.\n\nFinal:\nYo [Em]quiero vi[A]vir solo pa[Bm]ra ti, [A] [G]\n[G]Yo quiero vi[A]vir solo pa[D]ra ti.",
-  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-21)"
+  "letra": "G    A          F#m     Bm  G           A         F#m   Bm\n  No basta solo con cantar,   no basta solo con decir\nG               A  F#m         Bm        A Em       A         D\n  No es suficiente solo con querer hacer,    es necesario morir.\n\nG     A          F#m    Bm G            A          F#m   Bm\n  No basta solo con soñar,    no basta solo con  pedir\nG            A     F#m         Bm        A Em       A       D\n  No es suficiente solo con querer tener,    es necesario morir.\n\nG         A    F#m              Bm\n  Dame tu vida,   esa clase de vida que sabes dar\nG         A    F#m           Bm\n  Dame tu vida,  yo quiero vivir solo para ti\nG          A    F#m    Bm\n  Dame tu vida, resucítame en ti\nEm         A                  D\nYo quiero vivir solo    para ti.\n\nFinal:\n   Em       A             Bm   A  G\nYo quiero vivir solo para ti,\nG           A             D\nYo quiero vivir solo para ti.",
+  "fuente": "Captura de lacuerda.net enviada por Rodri (2026-10-21); acordes tal cual el original",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Alegra mi vida",
@@ -536,8 +546,9 @@
   "categoria": "Celebración",
   "link": "",
   "privada": true,
-  "fuente": "Capturas de lacuerda.net enviadas por Rodri (2026-10-24)",
-  "letra": "Intro:\n[Dbm] [Gb] [Ab] [Db] (x2)\n\nVerso 1:\n[Db]Yo te co[Gb]nocí en un momento [Db]feo\n[Db]Me encontraba [Gb]solo dentro de un [Ab]agujero\n[Bbm]Ya mi mundo estaba casi [Fm]destruido,\nQue [Gb]triste fue la [Ab]soledad.\n[Db]Pero fue tan [Gb]grande el amor que me [Db]diste,\nQue [Db]ha cambiado [Gb]todo con lo que me [Ab]diste,\n[Bbm]Por tu gran amor siente [Fm]paz mi corazón\n[Gb]porque aquel viejo pasado se [Ab]borró. [Gbm] [Ab]\n\nCoro:\nAlegra mi [Db]vida, Señor [F7]\nAlegra mi [Bbm]vida,\n[Gb]Te entrego mi [Db]corazón,\n[Gb]sana mis [Ab]heridas. [Gbm] [Ab]\n[Db]Alegra mi vida, Señor [F7]\nAlegra [Bbm]mi vida,\n[Gb]Contigo seguro [Db]estoy,\n[Ab]De noche y de [Db]día. [Ab]\n\nIntro:\n[Dbm] [Gb] [Ab] [Db] (x2)\n\nVerso 2:\n[Db]Quiero darte [Gb]gracias con esta [Db]alabanza,\nY [Db]mostrarle al [Gb]mundo tu luz de [Ab]esperanza,\n[Bbm]Tu palabra nunca volverá [Fm]vacía,\nEl [Gb]creer en Ti en una [Ab]garantía.\nPa[Db]sará los [Gb]días pasarán los [Db]años,\nQue[Db]darán bo[Gb]rrados muchos de[Ab]sengaños,\nMen[Bbm]tirás del mal, no me [Fm]dejaban respirar,\n[Gb]Pero pronto tu socorro me [Ab7]libró. [Gbm] [Ab]\n\nCoro:\nAlegra mi [Db]vida, Señor [F7]\nAlegra mi [Bbm]vida,\n[Gb]Te entrego mi [Db]corazón,\n[Gb]sana mis [Ab]heridas. [Gbm] [Ab]\n[Db]Alegra mi vida, Señor [F7]\nAlegra [Bbm]mi vida,\n[Gb]Contigo seguro [Db]estoy,\n[Ab]De noche y de [Db]día. [Gbm] [Ab]"
+  "fuente": "Capturas de lacuerda.net enviadas por Rodri (2026-10-24); acordes tal cual el original",
+  "letra": "Intro: DO#m FA# - SOL# - DO# X2\n\n DO#    FA#                 DO#\nYo te conocí en un momento feo\n DO#           FA#               SOL#\nMe encontraba solo dentro de un agujero\n LA#m                    FAm\nYa mi mundo estaba casi destruido,\n    FA#            SOL#\nQue triste fue la soledad.\n DO#          FA#                   DO#\nPero fue tan grande el amor que me diste,\n   DO#            FA#               SOL#\nQue ha cambiado todo con lo que me diste,\n  LA#m                  FAm\nPor tu gran amor siente paz mi corazón\n FA#                         SOL#    FA#m SOL#\nporque aquel viejo pasado se borró.\n\nCoro:\n          DO#          FA7\nAlegra mi vida, Señor\n          LA#m\nAlegra mi vida,\n FA#           DO#\nTe entrego mi corazón,\n FA#      SOL#   FA#m SOL#\nsana mis heridas.\nDO#                   FA7\nAlegra mi vida, Señor\n       LA#m\nAlegra mi vida,\n FA#            DO#\nContigo seguro estoy,\n SOL#        DO#   SOL#\nDe noche y de día.\n\nIntro: DO#m FA# - SOL# - DO# X2\n\n DO#          FA#              DO#\nQuiero darte gracias con esta alabanza,\n   DO#          FA#             SOL#\nY mostrarle al mundo tu luz de esperanza,\n LA#m                    FAm\nTu palabra nunca volverá vacía,\n   FA#                 SOL#\nEl creer en Ti es una garantía.\n  DO#       FA#             DO#\nPasará los días pasarán los años,\n  DO#        FA#           SOL#\nQuedarán borrados muchos desengaños,\n  LA#m                   FAm\nMentiras del mal, no me dejaban respirar,\n   FA#                    SOL#7   FA#m SOL#\nPero pronto tu socorro me libró.\n\nCoro:\n          DO#          FA7\nAlegra mi vida, Señor\n          LA#m\nAlegra mi vida,\n FA#           DO#\nTe entrego mi corazón,\n FA#      SOL#   FA#m SOL#\nsana mis heridas.\n       DO#            FA7\nAlegra mi vida, Señor\n       LA#m\nAlegra mi vida,\n FA#            DO#\nContigo seguro estoy,\n SOL#        DO#   FA#m SOL#\nDe noche y de día.",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Ven, es hora de adorarle",
@@ -546,8 +557,9 @@
   "categoria": "Alabanza",
   "link": "",
   "privada": true,
-  "fuente": "Capturas de lacuerda.net y letra de letras.com enviadas por Rodri (2026-10-25)",
-  "letra": "Verso (x2):\n[E]Ven, es hora de ado[A]rar[E]le\n[B]Ven, abre tu cora[F#m7]zón a [A]Él\n[E]Ven, ante su trono e[A]sta[E]mos\n[B]Ven, ante la maje[F#m7]stad de [A]Dios, [E]¡Ven!\n\nCoro (x2):\n[A]Toda lengua confesa[E]rá que Él es Dios\n[A]Las rodillas se dobla[E]rán,\nY [A]un tesoro eterno ten[C#m]drás en Él\nSi es[A]coges su [B]amor.\n\n(Vuelve al verso y al coro)\n\nInterludio (hablado, se queda en E):\nVen, ven\nEs sentir el poder de levantar nuestras voces\nY declarar que Jesucristo es el Señor sobre toda la tierra\nEl Espíritu Santo está levantando una nueva generación\nde hombres y mujeres que declaran\n¡Heme aquí, Señor! ¡Heme aquí, Señor!\n¿Qué le dicen en este día, Señor?\n¡Heme aquí, Señor!\nDíselo: ¡Heme aquí, Señor!\nHoy quiero contemplar toda la tierra llena de tu gloria\nSí, Señor\nY toda lengua confesando, sí\nY todas las rodillas doblándose\nDesde el norte hasta el sur, y del oeste al este\nCada lengua y cada tribu confesará\nEl Señor es su Cristo, es su Cristo\nEs su Cristo, oh, es su Cristo (entra con un crescendo en E)\n\nCoro (x3):\n[A]Toda lengua confesa[E]rá que Él es Dios\n[A]Las rodillas se dobla[E]rán,\nY [A]un tesoro eterno ten[C#m]drás en Él\nSi es[A]coges su [B]amor.\n\nFinal:\nDilo, Él es Rey\n¡Él es [E]Rey! Decláralo con fuerza\n¡Él es Rey! Sí, [Esus4]confiésalo\n¡Él es [E]Rey! Con todo tu [Esus4]corazón\n¡Él es [E]Rey! [Asus4]Sí, Señor\n¡Él es [E]Rey! De todo el [A]universo\n¡Él es [E]Rey! De toda la [A]creación\n¡Él es [E]Rey! Todos se postran [Asus4]ante Él\n¡Él es [E]Rey! Jesús, Jesús, [Asus4]Jesús, Jesús\n¡Él es [E]Rey! Él es el [A]Rey de reyes\n¡Él es [E]Rey! Él es el [A]Señor de los señores\n¡Él es [E]Rey! Sí\n¡Él es [E]Rey! Una vez [A]más dilo\n¡Él es [E]Rey!"
+  "fuente": "Capturas de lacuerda.net y letra de letras.com enviadas por Rodri (2026-10-25); acordes tal cual el original",
+  "letra": "Estrofa I\n E                 A  E\nVen, es hora de adorarle\n B               F#m7  A\nVen, abre tu corazón a Él\n E                  A  E\nVen, ante su trono estamos\n B               F#m7      A   E\nVen, ante la majestad de Dios, ven (Repetir X2)\n\n|Coro|\n A                  E\nToda lengua confesará que Él es Dios\n A                    E\nLas rodillas se doblarán,\n  A             C#m\nY un tesoro tendrás en Él\n      A         B\nSi escoges su amor.(Repetir X2)\n\n(Vuelve a estrofa I y repite toda la canción)\n\nInterludio Diálogo se queda en MI repuntiando\nVen, ven\nEs sentir el poder de levantar nuestras voces\nY declarar que Jesucristo es el Señor sobre toda la tierra\nEl Espíritu Santo está levantando una nueva generación\nde hombres y mujeres que declaran\n¡Heme aquí, Señor! ¡Heme aquí, Señor!\n¿Qué le dicen en este día, Señor?\n¡Heme aquí, Señor!\nDíselo: ¡Heme aquí, Señor!\nHoy quiero contemplar toda la tierra llena de tu gloria\nSí, Señor\nY toda lengua confesando, sí\nY todas las rodillas doblándose\nDesde el norte hasta el sur, y del oeste al este\nCada lengua y cada tribu confesará\nEl Señor es su Cristo, es su Cristo\nEs su Cristo, oh, es su Cristo (entra con un crescendo en E)\n\n      A         B\nSi escoges su amor.(Repetir X3)\n\nDilo, Él es Rey\n        E\n¡Él es Rey! (Decláralo con fuerza)\n                       Esus4\n¡Él es Rey!, (Sí confiésalo)\n        E                     Esus4\n¡Él es Rey!, (Con todo tu corazón dilo)\n        E          LAsus4\n¡Él es Rey!, (Sí Señor)\n        E                   A\n¡Él es Rey!, (De todo el Universo)\n        E                 A\n¡Él es Rey!, (De toda creación)\n        E              Asus4\n¡Él es Rey!, (Todos se postran ante Él)\n        E                   Asus4\n¡Él es Rey!  (Jesús, Jesús, Jesús, Jesús)\n        E              A\n¡Él es Rey!  (Él es el Rey de Reyes)\n        E               A\n¡Él es Rey!  (Él es el Señor de los Señores)\n        E\n¡Él es Rey! Sí\n        E             A\n¡Él es Rey!  (Una vez más dilo)\n        E\n¡Él es Rey!",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Cuán grande es Él",
@@ -556,9 +568,9 @@
   "categoria": "Adoración",
   "link": "",
   "privada": true,
-  "fuente": "Captura de lacuerda.net (versión en C) enviada por Rodri (2026-10-25)",
-  "letra": "Verso 1:\nSeñor, mi [C]Dios, al contemplar los [F]cielos\nEl firma[C]mento y [Dm]las estrellas [C]mil\nAl oír tu [C]voz en los potentes [F]truenos\nY ver bri[C]llar el [Dm]sol en su ce[C]nit [G]\n\nCoro (x2):\nMi cora[C]zón en[F]tona la canci[C]ón [Am]\nCuán grande es [Dm]Él [G], cuán grande es [C]Él [G]\n\nVerso 2:\nCuando re[C]cuerdo del amor di[F]vino\nQue, desde el ci[C]elo, al sa[G]lvador, en[C]vió [G]\nAquel Je[C]sús que, por salvarme, [F]vino\nY en una c[C]ruz su[G]frió por mí, mu[C]rió [G]\n\nCoro (x2):\nMi cora[C]zón en[F]tona la canci[C]ón [Am]\nCuán grande es [Dm]Él [G], cuán grande es [C]Él [G]\n\nPuente (x2):\n[Am] [F] [C] [G]\nAah, grande es Él\nGrande eres Tú, mi Rey\nNada se compara a Ti\n\nCoro (x2):\nMi cora[C]zón en[F]tona la canci[C]ón [Am]\nCuán grande es [Dm]Él [G], cuán grande es [C]Él [G]\n\nFinal:\n¡Grande Él es! Sobre todo\n¡No hay nadie como Tú! (Cuán grande es Él)\nNo hay nadie más, no hay nadie más\nNo hay nadie más (Cuán grande es Él)\nGrande eres Tú\nEl Dios de los cielos, de la tierra y del mar [C]",
-  "reemplaza": "2026-10-25-acordes-C"
+  "fuente": "Captura de lacuerda.net (versión en C) enviada por Rodri (2026-10-25); acordes tal cual el original",
+  "letra": "         C                       F\nSeñor mi Dios al contemplar los cielos\n         C      Dm             C\nEl firmamento y las estrellas mil\n          C                     F\nAl oír tu voz en los potentes truenos\n         C       Dm           C - G\nY ver brillar el sol en su cenit\n\n         C     F           C - Am\n//Mi corazón entona la canción\n               Dm-G                C - G\ncuán grande es Él   cuán grande es Él//\n\n          C               F\nCuando recuerdo el amor divino\n              C        G          C - G\nQue desde el cielo al Salvador envió\n        C                     F\nAquel Jesús que por salvarnos vino\n          C      G             C - G\nY en una cruz sufrió por mí murió\n\n         C     F           C - Am\n//Mi corazón entona la canción\n              Dm -G                C - G\ncuán grande es Él   cuán grande es Él//\n\nPuente: //Am  - F - C - G //\n\nFinal: C",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Hosanna",
@@ -567,8 +579,9 @@
   "categoria": "Alabanza",
   "link": "",
   "privada": true,
-  "fuente": "Capturas de lacuerda.net y letra de letras.com enviadas por Rodri (2026-10-25)",
-  "letra": "Intro:\n[Bm] [A] [F#m] [G] (x2)\n\nVerso 1:\n[Bm]Levantamos [A]un clamor\n[F#m]Por sanidad y [G]redención\n[Bm]Muéstranos lo [A]que tú ves\n[F#m]Los secretos de tu [G]corazón\n\nVerso 2:\n[Bm]Un pueblo unido [A]pide hoy\n[F#m]Tu libertad y [G]salvación\n[Bm]Ármanos con [A]tu valor\n[F#m]Lo que deseamos es [G]revolución\n\nPre-coro:\n[G]Que el cielo se parta en [A]dos, inúndanos [G]\nEn el desierto broten [A]ríos, vida sopla [Bm]hoy\n\nCoro (x2):\n[Bm]Hosanna al Rey de salva[D]ción\nHosanna al Dios Altísi[Em]mo\nHosanna, [G]Jesucristo, Je[A]sucristo es [Bm]Rey\n\nSolo:\n[G] [A] [G] [A] [Bm] [C#m]\n\n(Vuelve a los versos, pre-coro y coro)\n\nPuente (x4):\n[G]Hosanna, [A]hosanna, [G]hosanna al [A]Rey [Bm] [C#m]\n\nCoro (x2):\n[Bm]Hosanna al Rey de salva[D]ción\nHosanna al Dios Altísi[Em]mo\nHosanna, [G]Jesucristo, Je[A]sucristo es [Bm]Rey"
+  "fuente": "Capturas de lacuerda.net y letra de letras.com enviadas por Rodri (2026-10-25); acordes tal cual el original",
+  "letra": "Intro: Bm A F#m G x2\n\nBm         A\nLevantamos un clamor\nF#m          G\npor sanidad y redención\nBm             A\nMuéstranos lo que Tu ves\nF#m               G\nlos secretos de Tu corazón.\n\nBm               A\nUn pueblo unido pide hoy\nF#m           G\nTu libertad y salvación\nBm           A\nÁrmanos con Tu valor\nF#m                  G\nlo que deseamos es revolución.\n\nG                         A             G\nQue el cielo se parta en dos... inúndanos\n                        A                 Bm\nen el desierto broten ríos... vida sopla hoy\n\n  Bm                        D\n// Hosanna al Rey de Salvación\n                     Em\nHosanna al Dios Altísimo\n          G            A             Bm\nHosanna, Jesucristo, Jesucristo es Rey //\n\nSolo: G A G A Bm C#m\n\n(Vuelve a los versos, pre-coro y coro)\n\npuente (x4):\nG       A       G     A     Bm   C#m\nHosanna Hosanna Hosanna al rey\n\nCoro (x2):\n  Bm                        D\n// Hosanna al Rey de Salvación\n                     Em\nHosanna al Dios Altísimo\n          G            A             Bm\nHosanna, Jesucristo, Jesucristo es Rey //",
+  "reemplaza": "2026-11-15-tal-cual"
  },
  {
   "titulo": "Grande y Fuerte",
