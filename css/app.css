@@ -381,8 +381,9 @@ textarea.campo { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, C
   .tres { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .tres > :first-child { grid-column: 1 / -1; }
   .hoja { padding: 18px; }
-  /* acordes tal cual: en el celular la hoja se sale hasta casi el borde de la pantalla para que la letra sea más grande */
-  .hoja .arriba { width: calc(100vw - 12px); margin-inline: calc(50% - 50vw + 6px); }
+  /* acordes tal cual: en el celular la tarjeta entera llega casi al borde de la pantalla, así la letra es más grande */
+  .hoja:has(.arriba) { margin-inline: -14px; padding-inline: 8px; }
+  .hoja:has(.arriba) > :not(.letra) { padding-inline: 10px; }
   .barra-herr { justify-content: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0ms !important; } }

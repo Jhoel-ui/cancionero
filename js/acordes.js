@@ -139,7 +139,7 @@
 
   /* "Acordes arriba" tal cual vienen de la foto o el PDF: la línea de acordes encima de la letra, en ancho fijo
      y sin acomodar, para que se vea igual que el original. Se usa cuando la letra no tiene acordes [G]. */
-  const DELIM = /([\/()|*\-–—:]+)/, REPETIDO = /^([A-G])\1+$/;
+  const DELIM = /([\/()|*\-–—:,.]+)/, REPETIDO = /^([A-G])\1+$|^[A-G][#b]?dis$/;
   function esLineaArriba(l) {
     if (l.includes("[")) return false;
     const t = l.trim().split(/\s+/).filter(Boolean);
