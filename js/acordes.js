@@ -4,7 +4,7 @@
 
   const RE_ACORDE = /^[A-G][#b]?(?:maj|min|dim|aug|sus|add|m|M|\d|\+|-|°|ø|\(|\))*(?:\/[A-G][#b]?)?$/;
   const RE_SECCION = /^\s*\[?\s*(intro|verso|estrofa|coro|pre-?coro|precoro|puente|final|outro|interludio|instrumental|solo|tag|vamp)\b[^\]\[]*\]?\s*:?\s*$/i;
-  // Notación latina del ministerio: "+" mayor y "-" menor (do- = Cm, SIB+ = Bb, SOL+ = G, re7 = D7).
+  // Notación latina del ministerio: "+" o "M" mayor y "-" o "m" menor (do- = Cm, SIB+ = Bb, SOL+ = G, re7 = D7).
   const LATINAS = { do: "C", re: "D", mi: "E", fa: "F", sol: "G", la: "A", si: "B" };
   const RE_LATINO = /^(do|re|mi|fa|sol|la|si)([#♯]|[b♭](?![a-z]))?([+-]|m(?!aj)|maj|min|dim|aug|sus|add)?((?:\d|sus|add|dim|maj|\(|\)|\+)*)(?:\/(do|re|mi|fa|sol|la|si)([#b]?))?$/i;
   function latinoAAmericano(t) {
@@ -13,7 +13,7 @@
     // Sin "+", "-", número u otra marca no lo tomamos como acorde: "la", "mi", "si" son palabras.
     if (!m[3] && !m[4] && !m[2]) return null;
     const alt = (a) => (a ? (/[#♯]/.test(a) ? "#" : "b") : "");
-    let tipo = (m[3] || "").toLowerCase();
+    let tipo = m[3] === "M" ? "" : (m[3] || "").toLowerCase();   // "ReM" = Re mayor, "mim" = mi menor
     tipo = tipo === "+" ? "" : tipo === "-" || tipo === "min" ? "m" : tipo;
     const bajo = m[5] ? "/" + LATINAS[m[5].toLowerCase()] + alt(m[6]) : "";
     return LATINAS[m[1].toLowerCase()] + alt(m[2]) + tipo + (m[4] || "") + bajo;
