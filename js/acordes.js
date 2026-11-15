@@ -137,8 +137,39 @@
     return { acordes: a.replace(/\s+$/, ""), letra: l.replace(/\s+$/, "") };
   }
 
+  /* "Acordes arriba" tal cual vienen de la foto o el PDF: la línea de acordes encima de la letra, en ancho fijo
+     y sin acomodar, para que se vea igual que el original. Se usa cuando la letra no tiene acordes [G]. */
+  const DELIM = /([\/()|*\-–—:]+)/, REPETIDO = /^([A-G])\1+$/;
+  function esLineaArriba(l) {
+    if (l.includes("[")) return false;
+    const t = l.trim().split(/\s+/).filter(Boolean);
+    let acordes = 0;
+    for (const tok of t) {
+      if (/^[A-Za-zÁÉÍÓÚáéíóú]+:$/.test(tok)) continue;                     // "Intro:", "Metales:"
+      for (const p of tok.split(DELIM)) {
+        if (!p || DELIM.test(p) || /^x?\d+x?$/i.test(p)) continue;          // separadores, "x2", "2x"
+        if (!esAcorde(p) && !REPETIDO.test(p)) return false;                // "GG" = dos golpes de G
+        acordes++;
+      }
+    }
+    return acordes > 0;
+  }
+  const esArriba = (letra) => !!letra && !/\[[^\]]+\]/.test(letra) && letra.split("\n").some(esLineaArriba);
+  // Transpone una línea de acordes sin mover las columnas (si un acorde crece, empuja solo lo que sigue)
+  function transponerLinea(l, pasos, bem) {
+    if (!pasos) return l;
+    let s = ""; const re = /\S+/g; let m;
+    while ((m = re.exec(l))) {
+      const tok = m[0].split(DELIM).map((p) => (!p || DELIM.test(p) ? p : esAcorde(p) ? transponerAcorde(normalizarAcorde(p), pasos, bem)
+        : REPETIDO.test(p) ? transponerAcorde(p[0], pasos, bem).repeat(p.length) : p)).join("");
+      s = s.padEnd(s ? Math.max(m.index, s.length + 1) : m.index, " ") + tok;
+    }
+    return s;
+  }
+
   global.Acordes = {
     esAcorde, normalizarAcorde, segmentos, esSeccion, nombreSeccion, convertirAcordesArriba,
     usaBemoles, transponerAcorde, pasosEntre, tonoDe, tonoTranspuesto, quinta, lineasMonoespacio,
+    esArriba, esLineaArriba, transponerLinea,
   };
 })(window);

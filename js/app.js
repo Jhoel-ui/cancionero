@@ -411,6 +411,14 @@
   /* ---------- Letra con acordes ---------- */
   function letraHTML(letra, pasos, tonoFinal) {
     const bem = A.usaBemoles(tonoFinal);
+    if (A.esArriba(letra)) {
+      // Igual que la foto o el PDF: acordes encima, ancho fijo, columnas intactas.
+      const ls = letra.replace(/\r/g, "").replace(/\s+$/, "").split("\n");
+      const cols = Math.max(20, ...ls.map((l) => l.length));
+      return `<div class="arriba" style="--cols:${cols}">${ls.map((l) => A.esLineaArriba(l)
+        ? `<div class="ln ln-ac">${esc(A.transponerLinea(l, pasos, bem))}</div>`
+        : `<div class="ln">${esc(l) || "&nbsp;"}</div>`).join("")}</div>`;
+    }
     return (letra || "").replace(/\r/g, "").split("\n").map((l) => {
       if (A.esSeccion(l)) return `<div class="parte">${esc(A.nombreSeccion(l))}</div>`;
       const segs = A.segmentos(l);
@@ -1081,7 +1089,14 @@
       if (sub) doc.splitTextToSize(sub, W - 2 * M).forEach((ln) => { doc.text(ln, M, y); y += 13; });
       y += 12;
       const bem = A.usaBemoles(t), tam = 10.5, alto = tam * 1.28, maxCar = Math.floor((W - 2 * M) / (tam * 0.6));
+      const arriba = A.esArriba(c.letra);
       (c.letra || "").replace(/\r/g, "").split("\n").forEach((linea) => {
+        if (arriba) {   // tal cual el original: cada línea en ancho fijo, los acordes en su color
+          const ac = A.esLineaArriba(linea), txt = ac ? A.transponerLinea(linea, pasos, bem) : linea;
+          doc.setFontSize(tam); doc.setFont("courier", ac ? "bold" : "normal"); doc.setTextColor(...(ac ? tostado : cafe));
+          for (let k = 0; k < Math.max(txt.length, 1); k += maxCar) { espacio(alto); doc.text(txt.slice(k, k + maxCar), M, y); y += alto; }
+          return;
+        }
         if (A.esSeccion(linea)) {
           espacio(alto * 2.4); y += 6;
           doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(138, 109, 59);
