@@ -946,8 +946,24 @@
     if (S.vista === "repertorio" && S.ordenando) activarArrastre();
     activarPellizco(document.getElementById("partitura"));
     if (S.vista === "cancion" && S.modo === "presentacion") pintarPresentacion();
+    ajustarArriba();
     if (foco) { const el = document.getElementById(foco); if (el && el.tagName === "INPUT") { el.focus(); try { el.setSelectionRange(cursor, cursor); } catch (_) {} } }
   }
+  /* Acordes arriba: cada teléfono tiene su propia letra de ancho fijo (unas más anchas que otras), así que se mide
+     el ancho real de un carácter y se achica lo justo para que la línea más larga entre completa, sin cortarse. */
+  function ajustarArriba() {
+    document.querySelectorAll(".arriba").forEach((el) => {
+      el.style.fontSize = "";
+      const base = parseFloat(getComputedStyle(el).fontSize);
+      const m = document.createElement("span");
+      m.textContent = "0".repeat(20); m.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+      el.appendChild(m); const cw = m.getBoundingClientRect().width / 20; m.remove();
+      const cols = parseFloat(el.style.getPropertyValue("--cols")) || 40, ancho = el.clientWidth;
+      if (cw && ancho) el.style.fontSize = Math.max(8, Math.min(base, (base * ancho) / (cols * cw) - 0.2)) + "px";
+    });
+  }
+  addEventListener("resize", () => ajustarArriba());
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ajustarArriba());
   function pintarCuenta() {
     const caja = document.getElementById("cuenta"), f = S.fuente;
     if (!f || f.modo !== "firebase") { caja.innerHTML = ""; return; }
@@ -958,7 +974,7 @@
   }
   function actualizarVistaPrevia() {
     const f = document.getElementById("form-cancion"), v = document.getElementById("vista-previa");
-    if (f && v) v.innerHTML = letraHTML(f.letra.value, 0, f.tono.value) || '<p class="ayuda">Escribe la letra para verla aquí.</p>';
+    if (f && v) { v.innerHTML = letraHTML(f.letra.value, 0, f.tono.value) || '<p class="ayuda">Escribe la letra para verla aquí.</p>'; ajustarArriba(); }
   }
   function irA(vista) {
     if (vista !== "cancion") { cerrarPresentacion(); metro.parar(); }

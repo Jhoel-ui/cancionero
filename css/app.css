@@ -226,12 +226,12 @@ select.campo { min-height: 40px; padding: 0 36px 0 14px; border-radius: 999px; a
 .ln.con-acordes { white-space: pre-wrap; }
 .pal { white-space: nowrap; }
 /* Acordes arriba tal cual (foto/PDF): ancho fijo; la letra se achica para que la línea más larga quepa sin partirse */
-.arriba { font-family: ui-monospace, "Cascadia Mono", Consolas, "Roboto Mono", "Courier New", monospace; white-space: pre; line-height: 1.25; overflow-x: auto; overflow-wrap: normal;
-  font-size: max(12px, min(var(--letra), calc((100vw - 40px) / (var(--cols) * .61)))); }
+.arriba { font-family: ui-monospace, "Cascadia Mono", Consolas, "Roboto Mono", "Droid Sans Mono", "Courier New", monospace; white-space: pre; line-height: 1.25; overflow-x: auto; overflow-wrap: normal; letter-spacing: 0;
+  font-size: min(var(--letra), calc((100vw - 40px) / (var(--cols) * .61))); }
 .arriba .ln-ac { color: var(--acorde); font-weight: 800; }
 .arriba .ln-ac + .ln:not(.ln-ac) { margin-bottom: .2em; }
 .presentacion .letra:has(.arriba) { max-width: none; }
-.presentacion .arriba { font-size: min(2.6rem, calc((100vw - 48px) / (var(--cols) * .61))); width: max-content; max-width: 100%; margin-inline: auto; }
+.presentacion .arriba { font-size: min(2.6rem, calc((100vw - 48px) / (var(--cols) * .61))); }
 .presentacion .arriba .ln-ac { color: #f0c088; }
 .presentacion:not(.con-acordes) .arriba .ln-ac { display: none; }
 .seg { display: inline-block; position: relative; white-space: pre; }
